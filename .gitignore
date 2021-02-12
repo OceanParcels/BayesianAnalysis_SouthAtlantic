@@ -4,3 +4,4 @@ notebooks/.ipynb_checkpoints/
 *.gif
 *.pkl
 *.npy
+__pycache__/
