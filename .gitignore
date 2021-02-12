@@ -1,0 +1,6 @@
+data/
+.DS_Store
+notebooks/.ipynb_checkpoints/
+*.gif
+*.pkl
+*.npy
