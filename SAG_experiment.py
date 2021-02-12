@@ -10,7 +10,7 @@ import pickle
 import sys
 
 n_points = 10000  # particles per sampling site
-n_days = 22*30  # number of days to simulate
+n_days = 1  # 22*30  # number of days to simulate
 K_bar = 10  # diffusion value
 n_site = 13
 loc = sys.argv[1]
@@ -19,11 +19,13 @@ loc = sys.argv[1]
 # 23 nov 2018 - 23 dic 2018
 # 23 dic 2018 - 23 jan 2019
 
-# data = '../data/GLOBAL_ANALYSIS_FORECAST_PHY_001_024_SMOC/*.nc'#localcomputer
-# data = 'data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
-data = '/data/oceanparcels/input_data/CMEMS/GLOBAL_ANALYSIS_FORECAST_PHY_001_024/*.nc'  # gemini
-# 2018-01-01 to 2019-11-27
+# data = '../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
+data = 'data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
+output_path = f'data/source_{loc}_release.nc'
+# data = '/data/oceanparcels/input_data/CMEMS/GLOBAL_ANALYSIS_FORECAST_PHY_001_024/*.nc'  # gemini
+# output_path = f'/scratch/cpierard/source_{loc}_release.nc'
 
+# time range 2018-01-01 to 2019-11-27
 filesnames = {'U': data,
               'V': data}
 
@@ -40,7 +42,6 @@ def delete_particle(particle, fieldset, time, indices=indices):
     particle.delete()
 
 
-# 24 samples going from 4 jan to 23 jan 2019
 fieldset = FieldSet.from_netcdf(filesnames, variables, dimensions,
                                 allow_time_extrapolation=True, indices=indices)
 
@@ -59,7 +60,7 @@ infile = open('river_sources.pkl', 'rb')
 river_sources = pickle.load(infile)
 infile.close()
 
-np.random.seed(0)  # to repeat experiment in the same conditions
+np.random.seed(2)  # to repeat experiment in the same conditions
 # Create the cluster of particles around the sampling site
 # with a radius of 1/24 deg (?).
 time = datetime.datetime.strptime('2018-01-01 12:00:00', '%Y-%m-%d %H:%M:%S')
@@ -88,7 +89,8 @@ pset = ParticleSet.from_list(fieldset=fieldset,
 
 # Output file
 output_file = pset.ParticleFile(
-    name='/scratch/cpierard/forward_2years.nc', outputdt=timedelta(hours=24))
+    name=output_path,
+    outputdt=timedelta(hours=24))
 
 # Execute!
 pset.execute(pset.Kernel(AdvectionRK4) + DiffusionUniformKh,
