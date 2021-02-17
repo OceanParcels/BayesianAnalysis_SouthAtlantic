@@ -46,22 +46,22 @@ def Beaching(particle, fieldset, time):
 
 
 n_points = 10000  # particles per sampling site
-n_days = 1  # 22*30  # number of days to simulate
+n_days = 22*30  # number of days to simulate
 K_bar = 10  # diffusion value
-n_site = 13
-stored_dt = 1  # hours
+
+stored_dt = 24  # hours
 loc = sys.argv[1]
-# The file go from:
+# The files go from:
 # 23 oct 2018 - 23 nov 2018
 # 23 nov 2018 - 23 dic 2018
 # 23 dic 2018 - 23 jan 2019
 
 # data = '../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
-data = 'data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
-output_path = f'data/source_{loc}_release.nc'
-# data = '/data/oceanparcels/input_data/CMEMS/' + \
-#        'GLOBAL_ANALYSIS_FORECAST_PHY_001_024/*.nc'  # gemini
-# output_path = f'/scratch/cpierard/source_{loc}_release.nc'
+# data = 'data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
+# output_path = f'data/source_{loc}_release.nc'
+data = '/data/oceanparcels/input_data/CMEMS/' + \
+        'GLOBAL_ANALYSIS_FORECAST_PHY_001_024/*.nc'  # gemini
+output_path = f'/scratch/cpierard/source_{loc}_K{K_bar}_N{n_points}.nc'
 
 # time range 2018-01-01 to 2019-11-27
 filesnames = {'U': data,
