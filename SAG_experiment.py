@@ -56,9 +56,8 @@ fieldset.add_field(Field('Kh_meridional', data=K_bar * np.ones(size2D),
                          mesh='spherical'))
 
 # Opening file with positions and sampling dates.
-infile = open('river_sources.pkl', 'rb')
-river_sources = pickle.load(infile)
-infile.close()
+with open('river_sources.pkl', 'rb') as infile:
+    river_sources = pickle.load(infile)
 
 np.random.seed(2)  # to repeat experiment in the same conditions
 # Create the cluster of particles around the sampling site
@@ -71,12 +70,6 @@ lat_cluster = [river_sources[loc][0]]*n_points
 lon_cluster = np.array(lon_cluster)+(np.random.random(len(lon_cluster))-0.5)/24
 lat_cluster = np.array(lat_cluster)+(np.random.random(len(lat_cluster))-0.5)/24
 date_cluster = np.repeat(time, n_points)
-
-pset = ParticleSet.from_list(fieldset=fieldset,
-                             pclass=JITParticle,
-                             lon=lon_cluster,
-                             lat=lat_cluster,
-                             time=date_cluster)
 
 # creating the Particle set
 pset = ParticleSet.from_list(fieldset=fieldset,
