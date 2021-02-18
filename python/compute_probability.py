@@ -34,7 +34,7 @@ parameter = {'domain_limits': domain_limits,
 
 for loc in sources:
     print(loc)
-    path_2_file = f"../data/simulations/source_{loc}_release.nc"
+    path_2_file = f"../data/simulations/beaching_test/source_{loc}_K10_N10000.nc"
     particles = xr.load_dataset(path_2_file)
     n = particles.dims['traj']
     time = particles.dims['obs']
@@ -76,6 +76,6 @@ for k, loc in enumerate(sources):
     posterior[loc] = aux
 
 # Saving the likelihood, posteior probabilityand parameters
-np.save('../data/analysis/posterior.npy', posterior, allow_pickle=True)
-np.save('../data/analysis/likelihood.npy', likelihood, allow_pickle=True)
-np.save('../data/analysis/params.npy', parameter, allow_pickle=True)
+np.save('../data/analysis/posterior_beach.npy', posterior, allow_pickle=True)
+np.save('../data/analysis/likelihood_beach.npy', likelihood, allow_pickle=True)
+np.save('../data/analysis/params_beach.npy', parameter, allow_pickle=True)
