@@ -5,3 +5,4 @@ notebooks/.ipynb_checkpoints/
 *.pkl
 *.npy
 __pycache__/
+source_alocation_notes/
