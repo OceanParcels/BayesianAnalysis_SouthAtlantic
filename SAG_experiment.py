@@ -31,8 +31,8 @@ def set_diffussion(fieldset):
 def set_landmask(fieldset):
     land_mask = np.load('landmask.npy')
     fieldset.add_field(Field('land', data=land_mask,
-                       lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
-                       mesh='spherical'))
+                             lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
+                             mesh='spherical'))
 
 
 def Saple_landmask(particle, fieldset, time):
@@ -45,22 +45,23 @@ def Beaching(particle, fieldset, time):
         particle.delete()
 
 
-n_points = 10000  # particles per sampling site
+n_points = 100000  # particles per sampling site
 n_days = 22*30  # number of days to simulate
 K_bar = 10  # diffusion value
 
 stored_dt = 24  # hours
 loc = sys.argv[1]
-# The files go from:
-# 23 oct 2018 - 23 nov 2018
-# 23 nov 2018 - 23 dic 2018
-# 23 dic 2018 - 23 jan 2019
+
+# SMOC Hourly CMEMS
+# 2016-04-01 to 2020-08-31
 
 # data = '../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
 # data = 'data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
 # output_path = f'data/source_{loc}_release.nc'
 data = '/data/oceanparcels/input_data/CMEMS/' + \
-        'GLOBAL_ANALYSIS_FORECAST_PHY_001_024/*.nc'  # gemini
+    'GLOBAL_ANALYSIS_FORECAST_PHY_001_024_SMOC/*.nc'  # Gemini hourly
+# 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024/*.nc'  # gemini daily input_data
+
 output_path = f'/scratch/cpierard/source_{loc}_K{K_bar}_N{n_points}.nc'
 
 # time range 2018-01-01 to 2019-11-27
@@ -87,6 +88,8 @@ with open('river_sources.pkl', 'rb') as infile:
 np.random.seed(0)  # to repeat experiment in the same conditions
 # Create the cluster of particles around the sampling site
 # with a radius of 1/24 deg (?).
+
+# starting time for CMEMS daily
 time = datetime.datetime.strptime('2018-01-01 12:00:00', '%Y-%m-%d %H:%M:%S')
 
 lon_cluster = [river_sources[loc][1]]*n_points
