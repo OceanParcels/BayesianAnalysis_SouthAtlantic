@@ -18,10 +18,17 @@ lat_range = np.linspace(domain_limits[1][0], domain_limits[1][1],
                         number_bins[1])
 
 
+
+
 priors = pd.read_csv('../data/sources/river_inputs.csv', index_col=0)
 likelihood = {}
 posterior = {}
-sources = ['Rio-de-Janeiro', 'Rio-de-la-Plata']  # list(priors.keys())
+sources = ['Rio-de-Janeiro',
+           'Rio-de-la-Plata',
+           'Cape-Town',
+           'Porto-Alegre',
+           'Santos']  # list(priors.keys())
+
 number_sources = len(sources)
 
 # Storing the parameters of the simulations that are used for later
@@ -34,7 +41,7 @@ parameter = {'domain_limits': domain_limits,
 
 for loc in sources:
     print(loc)
-    path_2_file = f"../data/simulations/beaching_test/source_{loc}_K10_N10000.nc"
+    path_2_file = f"../data/simulations/smoc/source_{loc}_K10_N100000.nc"
     particles = xr.load_dataset(path_2_file)
     n = particles.dims['traj']
     time = particles.dims['obs']
@@ -53,7 +60,6 @@ for loc in sources:
         h[t] = H
 
     likelihood[loc] = h
-    print(likelihood.keys())
 
 # Normalizing constant (sum of all hypothesis)
 normalizing_constant = np.zeros((time, *number_bins))
@@ -76,6 +82,6 @@ for k, loc in enumerate(sources):
     posterior[loc] = aux
 
 # Saving the likelihood, posteior probabilityand parameters
-np.save('../data/analysis/posterior_beach.npy', posterior, allow_pickle=True)
-np.save('../data/analysis/likelihood_beach.npy', likelihood, allow_pickle=True)
-np.save('../data/analysis/params_beach.npy', parameter, allow_pickle=True)
+np.save('../data/analysis/posterior_smoc.npy', posterior, allow_pickle=True)
+np.save('../data/analysis/likelihood_smoc.npy', likelihood, allow_pickle=True)
+np.save('../data/analysis/params_smoc.npy', parameter, allow_pickle=True)
