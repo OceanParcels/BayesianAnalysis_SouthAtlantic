@@ -82,8 +82,7 @@ set_diffussion(fieldset)
 set_landmask(fieldset)
 
 # Opening file with positions and sampling dates.
-with open('river_sources.pkl', 'rb') as infile:
-    river_sources = pickle.load(infile)
+river_sources = np.load('river_sources.npy', allow_pickle=True).item()
 
 np.random.seed(0)  # to repeat experiment in the same conditions
 # Create the cluster of particles around the sampling site
