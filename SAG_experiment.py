@@ -5,7 +5,6 @@ from parcels import Variable, ErrorCode, DiffusionUniformKh, Field
 from datetime import timedelta
 import datetime
 import numpy as np
-import pickle
 import sys
 
 
@@ -13,11 +12,12 @@ class ParticleBeaching(JITParticle):
     beaching = Variable('beaching', dtype=np.int32, initial=0)
 
 
-def delete_particle(particle, fieldset, time):  # indices=indices):
+def delete_particle(particle, fieldset, time):
     particle.delete()
 
 
 def set_diffussion(fieldset):
+    """Function that adds the 'Kh_zonal' and 'Kh_meridional' to the fielset."""
     size2D = (fieldset.U.grid.ydim, fieldset.U.grid.xdim)
 
     fieldset.add_field(Field('Kh_zonal', data=K_bar * np.ones(size2D),
@@ -29,6 +29,7 @@ def set_diffussion(fieldset):
 
 
 def set_landmask(fieldset):
+    """Function that adds the land mask array to the fielset."""
     land_mask = np.load('landmask.npy')
     fieldset.add_field(Field('land', data=land_mask,
                              lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
@@ -68,8 +69,8 @@ output_path = f'/scratch/cpierard/source_{loc}_K{K_bar}_N{n_points}.nc'
 filesnames = {'U': data,
               'V': data}
 
-variables = {'U': 'uo',
-             'V': 'vo'}  # Use utotal
+variables = {'U': 'utotal',
+             'V': 'vtotal'}  # Use utotal
 
 dimensions = {'lat': 'latitude',
               'lon': 'longitude',
@@ -88,7 +89,7 @@ np.random.seed(0)  # to repeat experiment in the same conditions
 # Create the cluster of particles around the sampling site
 # with a radius of 1/24 deg (?).
 
-# starting time for CMEMS daily
+# realease time for particles
 time = datetime.datetime.strptime('2018-01-01 12:00:00', '%Y-%m-%d %H:%M:%S')
 
 lon_cluster = [river_sources[loc][1]]*n_points
@@ -109,9 +110,8 @@ beaching_kernel = pset.Kernel(Beaching)
 kernels = pset.Kernel(AdvectionRK4) + DiffusionUniformKh + sample_kernel \
                                     + beaching_kernel
 # Output file
-output_file = pset.ParticleFile(
-    name=output_path,
-    outputdt=timedelta(hours=stored_dt))
+output_file = pset.ParticleFile(name=output_path,
+                                outputdt=timedelta(hours=stored_dt))
 
 # Execute!
 pset.execute(kernels,
