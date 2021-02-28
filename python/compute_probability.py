@@ -18,8 +18,6 @@ lat_range = np.linspace(domain_limits[1][0], domain_limits[1][1],
                         number_bins[1])
 
 
-
-
 priors = pd.read_csv('../data/sources/river_inputs.csv', index_col=0)
 likelihood = {}
 posterior = {}
@@ -27,7 +25,12 @@ sources = ['Rio-de-Janeiro',
            'Rio-de-la-Plata',
            'Cape-Town',
            'Porto-Alegre',
-           'Santos']  # list(priors.keys())
+           'Santos',
+           'Cuvo',
+           'Chiloango-Congo',
+           'Luanda',
+           'Itajai',
+           'Paraiba']  # list(priors.keys())
 
 number_sources = len(sources)
 
