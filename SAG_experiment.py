@@ -3,7 +3,6 @@
 from parcels import FieldSet, ParticleSet, AdvectionRK4, JITParticle
 from parcels import Variable, ErrorCode, DiffusionUniformKh, Field
 from datetime import timedelta
-import datetime
 import numpy as np
 import sys
 
@@ -46,7 +45,7 @@ def Beaching(particle, fieldset, time):
         particle.delete()
 
 
-n_points = 100000  # particles per sampling site
+n_points = 5000  # particles per sampling site
 n_days = 22*30  # number of days to simulate
 K_bar = 10  # diffusion value
 
@@ -75,6 +74,7 @@ variables = {'U': 'utotal',
 dimensions = {'lat': 'latitude',
               'lon': 'longitude',
               'time': 'time'}
+
 indices = {'lat': range(1, 900), 'lon': range(1284, 2460)}
 fieldset = FieldSet.from_netcdf(filesnames, variables, dimensions,
                                 allow_time_extrapolation=True, indices=indices)
@@ -90,20 +90,20 @@ np.random.seed(0)  # to repeat experiment in the same conditions
 # with a radius of 1/24 deg (?).
 
 # realease time for particles
-time = datetime.datetime.strptime('2018-01-01 12:00:00', '%Y-%m-%d %H:%M:%S')
-
+# time = datetime.datetime.strptime('2018-01-01 12:00:00', '%Y-%m-%d %H:%M:%S')
+repeatdt = timedelta(days=30)
 lon_cluster = [river_sources[loc][1]]*n_points
 lat_cluster = [river_sources[loc][0]]*n_points
 lon_cluster = np.array(lon_cluster)+(np.random.random(len(lon_cluster))-0.5)/24
 lat_cluster = np.array(lat_cluster)+(np.random.random(len(lat_cluster))-0.5)/24
-date_cluster = np.repeat(time, n_points)
+# date_cluster = np.repeat(time, n_points)
 
 # creating the Particle set
 pset = ParticleSet.from_list(fieldset=fieldset,
                              pclass=ParticleBeaching,
                              lon=lon_cluster,
                              lat=lat_cluster,
-                             time=date_cluster)
+                             repeatdt=repeatdt)
 
 sample_kernel = pset.Kernel(Saple_landmask)
 beaching_kernel = pset.Kernel(Beaching)
