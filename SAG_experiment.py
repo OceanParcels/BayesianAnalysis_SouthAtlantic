@@ -11,6 +11,11 @@ import math
 import time
 from netCDF4 import Dataset
 import os
+from numpy import array
+import xarray
+import progressbar
+from copy import deepcopy
+import os
 
 
 class ParticleBeaching(JITParticle):
@@ -19,6 +24,13 @@ class ParticleBeaching(JITParticle):
 
 def delete_particle(particle, fieldset, time):  # indices=indices):
     particle.delete()
+
+
+def set_fieldset(filenames: list, variables: dict, dimensions: dict):
+    filenames = {'U': filenames[0],
+                 'V': filenames[0]}
+    return FieldSet.from_netcdf(filenames, variables, dimensions,
+                                allow_time_extrapolation=True)
 
 
 def set_diffussion(fieldset):
