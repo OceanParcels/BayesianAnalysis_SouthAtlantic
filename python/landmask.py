@@ -108,12 +108,10 @@ def create_border_current(landmask):
     return v_x.data, v_y.data
 
 
-def distance_to_shore(landmask, iterations=20, dx=1):
+def distance_to_shore(landmask, dx=1):
     """Function that computes the distance to the shore. It is based in the
     the `get_coastal_cells` algorithm.
     - landmask: the land mask built using `make_landmask` function.
-    - iterations: the number of cells to iterate from shore. By default is set
-    to 20, so you will get the distance from shore only for 20 cells from shore
     - dx: the grid cell dimesion. This is a crude approximation of the real
     distance (be careful).
 
@@ -122,12 +120,26 @@ def distance_to_shore(landmask, iterations=20, dx=1):
     ci = get_coastal_cells(landmask)
     landmask_i = landmask + ci
     dist = ci
+    i = 0
 
-    for i in range(iterations):
+    while i < dist.max():
         ci = get_coastal_cells(landmask_i)
         landmask_i += ci
-        dist += ci*(i+1)
+        dist += ci*(i+2)
+        i += 1
     return dist*dx
+
+
+# def distance_to_shore(landmask, iterations=20, dx=1):
+#     ci = get_coastal_cells(landmask)
+#     landmask_i = landmask + ci
+#     dist = ci
+#
+#     for i in range(iterations):
+#         ci = get_coastal_cells(landmask_i)
+#         landmask_i += ci
+#         dist += ci*(i+1)
+#     return dist*dx
 
 
 # Getting my data saved for simulations
@@ -138,7 +150,9 @@ indices = {'lat': range(1, 900), 'lon': range(1284, 2460)}
 land_mask = make_landmask(file_path, indices)
 coastal_cells = get_coastal_cells(land_mask)
 coastal_u, coastal_v = create_border_current(land_mask)
+distance2shore = distance_to_shore(land_mask, dx=9.26)  # km
 np.save('../landmask.npy', land_mask)
 np.save('../coastal_cells.npy', coastal_cells)
-np.save('../coastal_u.npy, ', coastal_u)
-np.save('../coastal_v.npy, ', coastal_v)
+np.save('../coastal_u.npy', coastal_u)
+np.save('../coastal_v.npy', coastal_v)
+np.save('../distance2shore.npy', distance2shore)

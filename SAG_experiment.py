@@ -1,33 +1,93 @@
 from parcels import FieldSet, ParticleSet, AdvectionRK4, JITParticle
 from parcels import Variable, ErrorCode, DiffusionUniformKh, Field
 from datetime import timedelta
-import datetime
 import numpy as np
 import sys
 from parcels import rng as random
 import math
 
+resusTime = 10
+shoreTime = 10
+n_points = 10000  # particles per sampling site
+n_days = 1  # 22*30  # number of days to simulate
+K_bar = 10  # diffusion value
+stored_dt = 1  # hours
+loc = sys.argv[1]
+repeatdt = timedelta(days=30)
+# The file go from:
+# 23 oct 2018 - 23 nov 2018
+# 23 nov 2018 - 23 dic 2018
+# 23 dic 2018 - 23 jan 2019
 
-def delete_particle(particle, fieldset, time):  # indices=indices):
-    particle.delete()
+# data = '../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
+data = 'data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
+output_path = f'data/test_{loc}_beachkernel.nc'
+# data = '/data/oceanparcels/input_data/CMEMS/' + \
+#        'GLOBAL_ANALYSIS_FORECAST_PHY_001_024/*.nc'  # gemini
+# output_path = f'/scratch/cpierard/source_{loc}_release.nc'
+
+# time range 2018-01-01 to 2019-11-27
+filesnames = {'U': data,
+              'V': data}
+
+variables = {'U': 'uo',
+             'V': 'vo'}  # Use utotal
+
+dimensions = {'lat': 'latitude',
+              'lon': 'longitude',
+              'time': 'time'}
+indices = {'lat': range(1, 900), 'lon': range(1284, 2460)}
+fieldset = FieldSet.from_netcdf(filesnames, variables, dimensions,
+                                allow_time_extrapolation=True, indices=indices)
+# check1
+print('Check 1')
+
+###############################################################################
+# Adding the border current, which applies for all scenarios except for 0     #
+###############################################################################
+u_border = np.load('coastal_u.npy')
+v_border = np.load('coastal_v.npy')
+fieldset.add_field(Field('borU', data=u_border,
+                         lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
+                         mesh='spherical'))
+fieldset.add_field(Field('borV', data=v_border,
+                         lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
+                         mesh='spherical'))
+# fieldset.borU.units = GeographicPolar()
+# fieldset.borV.units = Geographic()
+
+###############################################################################
+# Adding in the  land cell identifiers                                        #
+###############################################################################
+landID = np.load('landmask.npy')
+fieldset.add_field(Field('landID', landID,
+                         lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
+                         mesh='spherical'))
 
 
-def set_fieldset(filenames: list, variables: dict, dimensions: dict):
-    filenames = {'U': filenames[0],
-                 'V': filenames[0]}
-    return FieldSet.from_netcdf(filenames, variables, dimensions,
-                                allow_time_extrapolation=True)
+###############################################################################
+# Adding the horizontal diffusion                                             #
+###############################################################################
+size2D = (fieldset.U.grid.ydim, fieldset.U.grid.xdim)
+K_bar = 10
+K_h = K_bar * np.ones(size2D)
+nx, ny = np.where(landID == 1)
+K_h[nx, ny] = 0
+fieldset.add_field(Field('Kh_zonal', data=K_h,
+                         lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
+                         mesh='spherical'))
+fieldset.add_field(Field('Kh_meridional', data=K_h,
+                         lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
+                         mesh='spherical'))
 
 
-def set_diffussion(fieldset):
-    size2D = (fieldset.U.grid.ydim, fieldset.U.grid.xdim)
-
-    fieldset.add_field(Field('Kh_zonal', data=K_bar * np.ones(size2D),
-                             lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
-                             mesh='spherical'))
-    fieldset.add_field(Field('Kh_meridional', data=K_bar * np.ones(size2D),
-                             lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
-                             mesh='spherical'))
+###############################################################################
+# Distance to the shore                                                       #
+###############################################################################
+distance = np.load('distance2shore.npy')
+fieldset.add_field(Field('distance2shore', distance,
+                         lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
+                         mesh='spherical'))
 
 
 class SimpleBeachingResuspensionParticle(JITParticle):
@@ -46,7 +106,44 @@ class SimpleBeachingResuspensionParticle(JITParticle):
     # weights = Variable('weights', dtype=np.float32,
     #                    initial=attrgetter('weights'))
     # Distance of the particle to the coast
-    # distance = Variable('distance', dtype=np.float32, initial=0)
+    distance = Variable('distance', dtype=np.float32, initial=0)
+
+
+# CHEEEECKKKK!!!!!
+print('Check 2')
+#####################################
+# Opening file with positions and sampling dates.
+river_sources = np.load('river_sources.npy', allow_pickle=True).item()
+
+np.random.seed(0)  # to repeat experiment in the same conditions
+# Create the cluster of particles around the sampling site
+# with a radius of 1/24 deg (?).
+# time = datetime.datetime.strptime('2018-01-01 12:00:00', '%Y-%m-%d %H:%M:%S')
+repeatdt = timedelta(hours=3)
+lon_cluster = [river_sources[loc][1]]*n_points
+lat_cluster = [river_sources[loc][0]]*n_points
+lon_cluster = np.array(lon_cluster)+(np.random.random(len(lon_cluster))-0.5)/24
+lat_cluster = np.array(lat_cluster)+(np.random.random(len(lat_cluster))-0.5)/24
+beached = np.zeros_like(lon_cluster)
+age_par = np.zeros_like(lon_cluster)
+# date_cluster = np.repeat(time, n_points)
+
+# creating the Particle set
+pset = ParticleSet.from_list(fieldset=fieldset,
+                             pclass=SimpleBeachingResuspensionParticle,
+                             lon=lon_cluster,
+                             lat=lat_cluster,
+                             beach=beached, age=age_par,
+                             repeatdt=repeatdt)
+# check!
+print('Check 3')
+###############################################################################
+# KERNELS
+###############################################################################
+
+
+def delete_particle(particle, fieldset, time):  # indices=indices):
+    particle.delete()
 
 
 def beach(particle, fieldset, time):
@@ -66,9 +163,6 @@ def beach(particle, fieldset, time):
     particle.age += particle.dt
 
 
-###############################################################################
-# The advection kernel, which is just the default for scenario=0              #
-###############################################################################
 def AntiBeachNudging(particle, fieldset, time):
     """
     The nudging current is 1 m s^-1, which ought to be sufficient to overpower
@@ -79,10 +173,13 @@ def AntiBeachNudging(particle, fieldset, time):
     current will now kick in starting at 500m from the coast, since otherwise
     the particles tended to get stuck if we used the velocity treshhold.
     """
-    d1 = particle.depth
-    if fieldset.distance2shore[time, d1, particle.lat, particle.lon] < 0.5:
-        borUab = fieldset.borU[time, d1, particle.lat, particle.lon]
-        borVab = fieldset.borV[time, d1, particle.lat, particle.lon]
+
+    if fieldset.distance2shore[time, particle.depth,
+                               particle.lat, particle.lon] < 0.5:
+        borUab = fieldset.borU[time, particle.depth, particle.lat,
+                               particle.lon]
+        borVab = fieldset.borV[time, particle.depth, particle.lat,
+                               particle.lon]
         particle.lon -= borUab*particle.dt
         particle.lat -= borVab*particle.dt
 
@@ -96,42 +193,44 @@ def AdvectionRK4_floating(particle, fieldset, time):
     if particle.beach == 0:
         particle.distance = fieldset.distance2shore[time, particle.depth,
                                                     particle.lat, particle.lon]
-        d2 = particle.depth
-        if particle.lon > 180:
-            particle.lon -= 360
-        if particle.lon < -180:
-            particle.lon += 360
-        (u1, v1) = fieldset.UV[time, d2, particle.lat, particle.lon]
-        lon1, lat1 = (particle.lon + u1*.5*particle.dt, particle.lat + v1*.5*particle.dt)
-        if lon1 > 180:
-            lon1 -= 360
-        if lon1 < -180:
-            lon1 += 360
-        (u2, v2) = fieldset.UV[time + .5 * particle.dt, d2, lat1, lon1]
-        lon2, lat2 = (particle.lon + u2*.5*particle.dt, particle.lat + v2*.5*particle.dt)
-        if lon2 > 180:
-            lon2 -= 360
-        if lon2 < -180:
-            lon2 += 360
-        (u3, v3) = fieldset.UV[time + .5 * particle.dt, d2, lat2, lon2]
-        lon3, lat3 = (particle.lon + u3*particle.dt, particle.lat + v3*particle.dt)
 
-        if lon3 > 180:
-            lon3 -= 360
-        if lon3 < -180:
-            lon3 += 360
-        (u4, v4) = fieldset.UV[time + particle.dt, d2, lat3, lon3]
+        # if particle.lon > 180:
+        #     particle.lon -= 360
+        # if particle.lon < -180:
+        #     particle.lon += 360
+        (u1, v1) = fieldset.UV[time, particle.depth, particle.lat,
+                               particle.lon]
+        lon1, lat1 = (particle.lon + u1*.5*particle.dt,
+                      particle.lat + v1*.5*particle.dt)
+        # if lon1 > 180:
+        #     lon1 -= 360
+        # if lon1 < -180:
+        #     lon1 += 360
+        (u2, v2) = fieldset.UV[time + .5 * particle.dt, particle.depth,
+                               lat1, lon1]
+        lon2, lat2 = (particle.lon + u2*.5*particle.dt,
+                      particle.lat + v2*.5*particle.dt)
+        # if lon2 > 180:
+        #     lon2 -= 360
+        # if lon2 < -180:
+        #     lon2 += 360
+        (u3, v3) = fieldset.UV[time + .5 * particle.dt, particle.depth,
+                               lat2, lon2]
+        lon3, lat3 = (particle.lon + u3*particle.dt,
+                      particle.lat + v3*particle.dt)
+
+        # if lon3 > 180:
+        #     lon3 -= 360
+        # if lon3 < -180:
+        #     lon3 += 360
+        (u4, v4) = fieldset.UV[time + particle.dt, particle.depth, lat3, lon3]
 
         particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt
-        if particle.lon > 180:
-            particle.lon -= 360
-        if particle.lon < -180:
-            particle.lon += 360
+        # if particle.lon > 180:
+        #     particle.lon -= 360
+        # if particle.lon < -180:
+        #     particle.lon += 360
         particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt
-
-###############################################################################
-# The diffusion kernel                                                        #
-###############################################################################
 
 
 def BrownianMotion2D(particle, fieldset, time):
@@ -140,85 +239,36 @@ def BrownianMotion2D(particle, fieldset, time):
     we don't want particles to jump on land and thereby beach"""
     if particle.beach == 0:
         r = 1/3.
-        kh_meridional = fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon]
+        kh_meridional = fieldset.Kh_meridional[time, particle.depth,
+                                               particle.lat, particle.lon]
         lat_p = particle.lat + random.uniform(-1., 1.) * \
             math.sqrt(2*math.fabs(particle.dt)*kh_meridional/r)
-        kh_zonal = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon]
+        kh_zonal = fieldset.Kh_zonal[time, particle.depth,
+                                     particle.lat, particle.lon]
         lon_p = particle.lon + random.uniform(-1., 1.) * \
             math.sqrt(2*math.fabs(particle.dt)*kh_zonal/r)
         particle.lon = lon_p
         particle.lat = lat_p
 
 
-resusTime = 10
-shoreTime = 10
-n_points = 10000  # particles per sampling site
-n_days = 1  # 22*30  # number of days to simulate
-K_bar = 10  # diffusion value
-n_site = 13
-stored_dt = 1  # hours
-loc = sys.argv[1]
-# The file go from:
-# 23 oct 2018 - 23 nov 2018
-# 23 nov 2018 - 23 dic 2018
-# 23 dic 2018 - 23 jan 2019
+###############################################################################
+# And now the overall kernel                                                  #
+###############################################################################
+# CHEEEEEEEEEECK!!!!
+print('Check 4')
 
-# data = '../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
-data = 'data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
-output_path = f'data/source_{loc}_delayed_release.nc'
-# data = '/data/oceanparcels/input_data/CMEMS/' + \
-#        'GLOBAL_ANALYSIS_FORECAST_PHY_001_024/*.nc'  # gemini
-# output_path = f'/scratch/cpierard/source_{loc}_release.nc'
+totalKernel = pset.Kernel(AdvectionRK4_floating) + \
+    pset.Kernel(BrownianMotion2D) + pset.Kernel(AntiBeachNudging) + \
+    pset.Kernel(beach)
 
-# time range 2018-01-01 to 2019-11-27
-filesnames = {'U': data,
-              'V': data}
 
-variables = {'U': 'uo',
-             'V': 'vo'}  # Use utotal
-
-dimensions = {'lat': 'latitude',
-              'lon': 'longitude',
-              'time': 'time'}
-indices = {'lat': range(1, 900), 'lon': range(1284, 2460)}
-fieldset = FieldSet.from_netcdf(filesnames, variables, dimensions,
-                                allow_time_extrapolation=True, indices=indices)
-
-set_diffussion(fieldset)
-set_landmask(fieldset)
-
-# Opening file with positions and sampling dates.
-river_sources = np.load('river_sources.npy', allow_pickle=True).item()
-
-np.random.seed(0)  # to repeat experiment in the same conditions
-# Create the cluster of particles around the sampling site
-# with a radius of 1/24 deg (?).
-# time = datetime.datetime.strptime('2018-01-01 12:00:00', '%Y-%m-%d %H:%M:%S')
-repeatdt = timedelta(hours=3)
-lon_cluster = [river_sources[loc][1]]*n_points
-lat_cluster = [river_sources[loc][0]]*n_points
-lon_cluster = np.array(lon_cluster)+(np.random.random(len(lon_cluster))-0.5)/24
-lat_cluster = np.array(lat_cluster)+(np.random.random(len(lat_cluster))-0.5)/24
-# date_cluster = np.repeat(time, n_points)
-
-# creating the Particle set
-pset = ParticleSet.from_list(fieldset=fieldset,
-                             pclass=ParticleBeaching,
-                             lon=lon_cluster,
-                             lat=lat_cluster,
-                             repeatdt=repeatdt)
-
-sample_kernel = pset.Kernel(Saple_landmask)
-beaching_kernel = pset.Kernel(Beaching)
-kernels = pset.Kernel(AdvectionRK4) + DiffusionUniformKh + sample_kernel \
-                                    + beaching_kernel
 # Output file
 output_file = pset.ParticleFile(
     name=output_path,
     outputdt=timedelta(hours=stored_dt))
 
 # Execute!
-pset.execute(kernels,
+pset.execute(totalKernel,
              runtime=timedelta(days=n_days),
              dt=timedelta(hours=1),
              output_file=output_file,
