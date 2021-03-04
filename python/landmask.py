@@ -148,7 +148,8 @@ def distance_to_shore(landmask, dx=1):
 
 # Getting my data saved for simulations
 
-file_path = "../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc"
+file_path = '/data/oceanparcels/input_data/CMEMS/' + \
+    'GLOBAL_ANALYSIS_FORECAST_PHY_001_024_SMOC/SMOC_20170703_R20170704.nc'
 indices = {'lat': range(1, 900), 'lon': range(1284, 2460)}
 
 land_mask = make_landmask(file_path, indices)
