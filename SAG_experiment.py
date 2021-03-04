@@ -1,37 +1,36 @@
-from parcels import FieldSet, ParticleSet, AdvectionRK4, JITParticle
-from parcels import Variable, ErrorCode, DiffusionUniformKh, Field
+from parcels import FieldSet, ParticleSet, JITParticle
+from parcels import Variable, ErrorCode, Field
 from datetime import timedelta
 import numpy as np
 import sys
 from parcels import rng as random
 import math
 
-resusTime = 10
+resusTime = 69
 shoreTime = 10
-n_points = 10000  # particles per sampling site
-n_days = 1  # 22*30  # number of days to simulate
+
+n_points = 5000  # particles per sampling site
+n_days = 2*30  # number of days to simulate
 K_bar = 10  # diffusion value
-stored_dt = 1  # hours
+stored_dt = 24  # hours
 loc = sys.argv[1]
-repeatdt = timedelta(days=30)
+repeatdt = timedelta(days=10)
 # The file go from:
 # 23 oct 2018 - 23 nov 2018
 # 23 nov 2018 - 23 dic 2018
 # 23 dic 2018 - 23 jan 2019
 
 # data = '../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
-data = 'data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
-output_path = f'data/test_{loc}_beachkernel.nc'
-# data = '/data/oceanparcels/input_data/CMEMS/' + \
-#        'GLOBAL_ANALYSIS_FORECAST_PHY_001_024/*.nc'  # gemini
-# output_path = f'/scratch/cpierard/source_{loc}_release.nc'
+data = '/data/oceanparcels/input_data/CMEMS/' + \
+    'GLOBAL_ANALYSIS_FORECAST_PHY_001_024_SMOC/*.nc'  # Gemini hourly
+output_path = f'/scratch/cpierard/br-cr_{loc}_K{n_days}_N{n_points}.nc'
 
 # time range 2018-01-01 to 2019-11-27
 filesnames = {'U': data,
               'V': data}
 
-variables = {'U': 'uo',
-             'V': 'vo'}  # Use utotal
+variables = {'U': 'utotal',
+             'V': 'vtotal'}  # Use utotal
 
 dimensions = {'lat': 'latitude',
               'lon': 'longitude',
@@ -39,8 +38,6 @@ dimensions = {'lat': 'latitude',
 indices = {'lat': range(1, 900), 'lon': range(1284, 2460)}
 fieldset = FieldSet.from_netcdf(filesnames, variables, dimensions,
                                 allow_time_extrapolation=True, indices=indices)
-# check1
-print('Check 1')
 
 ###############################################################################
 # Adding the border current, which applies for all scenarios except for 0     #
