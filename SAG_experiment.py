@@ -3,7 +3,8 @@ from parcels import Variable, ErrorCode, Field
 from datetime import timedelta
 import numpy as np
 import sys
-from parcels import rng as random
+#from parcels import rng as random
+from parcels import ParcelsRandom
 import math
 
 resusTime = 69
@@ -149,12 +150,12 @@ def beach(particle, fieldset, time):
                                        particle.lon]
         if dist < 10:
             beach_prob = math.exp(-particle.dt/(particle.coastPar*86400.))
-            if random.random(0., 1.) > beach_prob:
+            if ParcelsRandom.random(0., 1.) > beach_prob:
                 particle.beach = 1
     # Now the part where we build in the resuspension
     elif particle.beach == 1:
         resus_prob = math.exp(-particle.dt/(particle.resus_t*86400.))
-        if random.random(0., 1.) > resus_prob:
+        if ParcelsRandom.random(0., 1.) > resus_prob:
             particle.beach = 0
     # Update the age of the particle
     particle.age += particle.dt
@@ -238,11 +239,11 @@ def BrownianMotion2D(particle, fieldset, time):
         r = 1/3.
         kh_meridional = fieldset.Kh_meridional[time, particle.depth,
                                                particle.lat, particle.lon]
-        lat_p = particle.lat + random.uniform(-1., 1.) * \
+        lat_p = particle.lat + ParcelsRandom.uniform(-1., 1.) * \
             math.sqrt(2*math.fabs(particle.dt)*kh_meridional/r)
         kh_zonal = fieldset.Kh_zonal[time, particle.depth,
                                      particle.lat, particle.lon]
-        lon_p = particle.lon + random.uniform(-1., 1.) * \
+        lon_p = particle.lon + ParcelsRandom.uniform(-1., 1.) * \
             math.sqrt(2*math.fabs(particle.dt)*kh_zonal/r)
         particle.lon = lon_p
         particle.lat = lat_p
