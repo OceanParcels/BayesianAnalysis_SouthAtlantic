@@ -3,7 +3,8 @@ import numpy as np
 
 
 def make_landmask(fielddata, indices):
-    """Returns landmask where land = 1 and ocean = 0
+    """Returns landmask where land = 1 and ocean = 0.
+
     - fielddata is the path to an output of a model (netcdf file expected).
     - indices is a dictionary such as:
         indices = {'lat': slice(1, 900), 'lon': slice(1284, 2460)}.
@@ -24,6 +25,7 @@ def make_landmask(fielddata, indices):
 
 def make_grid(fielddata, indices):
     """Returns landmask where land = 1 and ocean = 0
+
     - fielddata is the path to an output of a model (netcdf file expected).
     - indices is a dictionary such as:
         indices = {'lat': slice(1, 900), 'lon': slice(1284, 2460)}.
@@ -45,7 +47,7 @@ def make_grid(fielddata, indices):
 
 def get_coastal_cells(landmask):
     """Function that detects the coastal cells, i.e. the ocean cells directly
-    next to land.
+    next to land. Computes the Laplacian of landmask.
 
     - landmask: the land mask built using `make_landmask`, where land cell = 1
                 and ocean cell = 0.
@@ -64,7 +66,7 @@ def get_coastal_cells(landmask):
 
 def get_shore_cells(landmask):
     """Function that detects the shore cells, i.e. the land cells directly
-    next to the ocean.
+    next to the ocean. Computes the Laplacian of landmask.
 
     - landmask: the land mask built using `make_landmask`, where land cell = 1
                 and ocean cell = 0.
@@ -82,7 +84,8 @@ def get_shore_cells(landmask):
 
 
 def create_border_current(landmask):
-    """Function that creates a border current 1 m/s away from the shore.txt
+    """Function that creates a border current 1 m/s away from the shore.
+
     - landmask: the land mask built using `make_landmask`.
 
     Output: two 2D arrays, one for each camponent of the velocity.
@@ -111,6 +114,7 @@ def create_border_current(landmask):
 def distance_to_shore(landmask, dx=1):
     """Function that computes the distance to the shore. It is based in the
     the `get_coastal_cells` algorithm.
+
     - landmask: the land mask built using `make_landmask` function.
     - dx: the grid cell dimesion. This is a crude approximation of the real
     distance (be careful).
