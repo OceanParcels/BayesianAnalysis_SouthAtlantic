@@ -7,8 +7,31 @@ Computes the probability field from a Ocean Parcels simulation.
 Merges 2d likelihood of different OP output files.
 1 output file per source.
 """
-# ###### Paramaters ########
 
+
+def moving_average(x, w):
+    return np.convolve(x, np.ones(w), 'valid') / w
+
+
+def running_average_field(array, window=30):
+    nt, nx, ny = array.shape
+
+    averaged = np.zeros((nt - window + 1, nx, ny))
+    index_slice = int((window-1)/2)
+    time_array = np.linspace(index_slice, nt-index_slice+1, nt+1-window,
+                             dtype=int)
+
+    for i in range(nx):
+        for j in range(ny):
+
+            averaged[:, i, j] = moving_average(array[:, i, j], window)
+
+    return averaged, time_array
+
+
+compute_mean = True
+
+# ###### Paramaters ########
 # parameters for binning
 domain_limits = [[-73.0, 24.916666], [-79.916664, -5.0833335]]
 number_bins = (120, 90)  # original from cmems is (1176, 899)
@@ -63,6 +86,20 @@ for loc in sources:
         h[t] = H
 
     likelihood[loc] = h
+
+################
+if compute_mean:
+
+    avg_likelihood = {}
+    for loc in sources:
+        mean, new_time = running_average_field(likelihood[loc], window=30)
+
+        avg_likelihood[loc] = mean
+
+    likelihood = avg_likelihood
+    parameter['time_array'] = new_time
+    time = new_time
+
 
 # Normalizing constant (sum of all hypothesis)
 normalizing_constant = np.zeros((time, *number_bins))
