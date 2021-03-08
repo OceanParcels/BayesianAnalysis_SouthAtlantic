@@ -14,7 +14,7 @@ start_time = datetime.strptime('2016-04-01 12:00:00',
 # end_time = '2020-08-31'
 # delta = 1613 days
 n_points = 100000  # particles per sampling site
-n_days = 2*365  # number of days to simulate
+n_days = 1600  # number of days to simulate
 K_bar = 10  # diffusion value
 stored_dt = 24  # hours
 loc = sys.argv[1]
@@ -23,7 +23,7 @@ repeatdt = timedelta(days=10)
 # data = '../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
 data = '/data/oceanparcels/input_data/CMEMS/' + \
     'GLOBAL_ANALYSIS_FORECAST_PHY_001_024_SMOC/*.nc'  # Gemini hourly
-output_path = f'/scratch/cpierard/br-cr_{loc}_K{n_days}_N{n_points}.nc'
+output_path = f'/scratch/cpierard/br-cr_{loc}_D{n_days}_N{n_points}.nc'
 
 # time range 2018-01-01 to 2019-11-27
 filesnames = {'U': data,
