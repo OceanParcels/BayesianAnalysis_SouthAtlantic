@@ -1,25 +1,24 @@
 from parcels import FieldSet, ParticleSet, JITParticle
 from parcels import Variable, ErrorCode, Field
 from datetime import timedelta
+from datetime import datetime
 import numpy as np
 import sys
-#from parcels import rng as random
 from parcels import ParcelsRandom
 import math
 
 resusTime = 69
 shoreTime = 10
-
-n_points = 5000  # particles per sampling site
-n_days = 2*30  # number of days to simulate
+start_time = datetime.strptime('2016-04-01 12:00:00',
+                               '%Y-%m-%d %H:%M:%S')
+# end_time = '2020-08-31'
+# delta = 1613 days
+n_points = 100000  # particles per sampling site
+n_days = 2*365  # number of days to simulate
 K_bar = 10  # diffusion value
 stored_dt = 24  # hours
 loc = sys.argv[1]
 repeatdt = timedelta(days=10)
-# The file go from:
-# 23 oct 2018 - 23 nov 2018
-# 23 nov 2018 - 23 dic 2018
-# 23 dic 2018 - 23 jan 2019
 
 # data = '../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
 data = '/data/oceanparcels/input_data/CMEMS/' + \
@@ -124,22 +123,25 @@ lon_cluster = np.array(lon_cluster)+(np.random.random(len(lon_cluster))-0.5)/24
 lat_cluster = np.array(lat_cluster)+(np.random.random(len(lat_cluster))-0.5)/24
 beached = np.zeros_like(lon_cluster)
 age_par = np.zeros_like(lon_cluster)
-# date_cluster = np.repeat(time, n_points)
+
+date_cluster = np.empty(n_points, dtype='O')
+for i in range(n_points):
+    random_date = start_time + timedelta(days=np.random.randint(0, 365),
+                                         hours=np.random.randint(0, 23))
+    date_cluster[i] = random_date
 
 # creating the Particle set
 pset = ParticleSet.from_list(fieldset=fieldset,
                              pclass=SimpleBeachingResuspensionParticle,
                              lon=lon_cluster,
                              lat=lat_cluster,
-                             beach=beached, age=age_par,
-                             repeatdt=repeatdt)
-# check!
-print('Check 3')
+                             time=date_cluster,
+                             beach=beached, age=age_par)
+
+
 ###############################################################################
 # KERNELS
 ###############################################################################
-
-
 def delete_particle(particle, fieldset, time):  # indices=indices):
     particle.delete()
 
@@ -252,9 +254,6 @@ def BrownianMotion2D(particle, fieldset, time):
 ###############################################################################
 # And now the overall kernel                                                  #
 ###############################################################################
-# CHEEEEEEEEEECK!!!!
-print('Check 4')
-
 totalKernel = pset.Kernel(AdvectionRK4_floating) + \
     pset.Kernel(BrownianMotion2D) + pset.Kernel(AntiBeachNudging) + \
     pset.Kernel(beach)
