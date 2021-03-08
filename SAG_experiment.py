@@ -10,7 +10,7 @@ import math
 resusTime = 10
 shoreTime = 10
 n_points = 10000  # particles per sampling site
-n_days = 1  # 22*30  # number of days to simulate
+n_days = 10  # 22*30  # number of days to simulate
 K_bar = 10  # diffusion value
 stored_dt = 1  # hours
 loc = sys.argv[1]
