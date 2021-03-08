@@ -1,9 +1,10 @@
 from parcels import FieldSet, ParticleSet, AdvectionRK4, JITParticle
 from parcels import Variable, ErrorCode, DiffusionUniformKh, Field
 from datetime import timedelta
+from datetime import datetime
 import numpy as np
 import sys
-from parcels import rng as random
+from parcels import ParcelsRandom
 import math
 
 resusTime = 10
@@ -39,8 +40,6 @@ dimensions = {'lat': 'latitude',
 indices = {'lat': range(1, 900), 'lon': range(1284, 2460)}
 fieldset = FieldSet.from_netcdf(filesnames, variables, dimensions,
                                 allow_time_extrapolation=True, indices=indices)
-# check1
-print('Check 1')
 
 ###############################################################################
 # Adding the border current, which applies for all scenarios except for 0     #
@@ -109,8 +108,6 @@ class SimpleBeachingResuspensionParticle(JITParticle):
     distance = Variable('distance', dtype=np.float32, initial=0)
 
 
-# CHEEEECKKKK!!!!!
-print('Check 2')
 #####################################
 # Opening file with positions and sampling dates.
 river_sources = np.load('river_sources.npy', allow_pickle=True).item()
@@ -119,24 +116,30 @@ np.random.seed(0)  # to repeat experiment in the same conditions
 # Create the cluster of particles around the sampling site
 # with a radius of 1/24 deg (?).
 # time = datetime.datetime.strptime('2018-01-01 12:00:00', '%Y-%m-%d %H:%M:%S')
-repeatdt = timedelta(hours=3)
+
 lon_cluster = [river_sources[loc][1]]*n_points
 lat_cluster = [river_sources[loc][0]]*n_points
 lon_cluster = np.array(lon_cluster)+(np.random.random(len(lon_cluster))-0.5)/24
 lat_cluster = np.array(lat_cluster)+(np.random.random(len(lat_cluster))-0.5)/24
 beached = np.zeros_like(lon_cluster)
 age_par = np.zeros_like(lon_cluster)
-# date_cluster = np.repeat(time, n_points)
+
+start_time = datetime.strptime('2018-01-01 12:00:00',
+                               '%Y-%m-%d %H:%M:%S')
+date_cluster = np.empty(n_points, dtype='O')
+for i in range(n_points):
+    random_date = start_time + timedelta(hours=np.random.randint(0, 23))
+    date_cluster[i] = random_date
 
 # creating the Particle set
 pset = ParticleSet.from_list(fieldset=fieldset,
                              pclass=SimpleBeachingResuspensionParticle,
                              lon=lon_cluster,
                              lat=lat_cluster,
-                             beach=beached, age=age_par,
-                             repeatdt=repeatdt)
-# check!
-print('Check 3')
+                             time=date_cluster,
+                             beach=beached, age=age_par)
+
+
 ###############################################################################
 # KERNELS
 ###############################################################################
@@ -152,12 +155,12 @@ def beach(particle, fieldset, time):
                                        particle.lon]
         if dist < 10:
             beach_prob = math.exp(-particle.dt/(particle.coastPar*86400.))
-            if random.random(0., 1.) > beach_prob:
+            if ParcelsRandom.random(0., 1.) > beach_prob:
                 particle.beach = 1
     # Now the part where we build in the resuspension
     elif particle.beach == 1:
         resus_prob = math.exp(-particle.dt/(particle.resus_t*86400.))
-        if random.random(0., 1.) > resus_prob:
+        if ParcelsRandom.random(0., 1.) > resus_prob:
             particle.beach = 0
     # Update the age of the particle
     particle.age += particle.dt
@@ -241,11 +244,11 @@ def BrownianMotion2D(particle, fieldset, time):
         r = 1/3.
         kh_meridional = fieldset.Kh_meridional[time, particle.depth,
                                                particle.lat, particle.lon]
-        lat_p = particle.lat + random.uniform(-1., 1.) * \
+        lat_p = particle.lat + ParcelsRandom.uniform(-1., 1.) * \
             math.sqrt(2*math.fabs(particle.dt)*kh_meridional/r)
         kh_zonal = fieldset.Kh_zonal[time, particle.depth,
                                      particle.lat, particle.lon]
-        lon_p = particle.lon + random.uniform(-1., 1.) * \
+        lon_p = particle.lon + ParcelsRandom.uniform(-1., 1.) * \
             math.sqrt(2*math.fabs(particle.dt)*kh_zonal/r)
         particle.lon = lon_p
         particle.lat = lat_p
@@ -254,9 +257,6 @@ def BrownianMotion2D(particle, fieldset, time):
 ###############################################################################
 # And now the overall kernel                                                  #
 ###############################################################################
-# CHEEEEEEEEEECK!!!!
-print('Check 4')
-
 totalKernel = pset.Kernel(AdvectionRK4_floating) + \
     pset.Kernel(BrownianMotion2D) + pset.Kernel(AntiBeachNudging) + \
     pset.Kernel(beach)
