@@ -1,5 +1,5 @@
-from parcels import FieldSet, ParticleSet, AdvectionRK4, JITParticle
-from parcels import Variable, ErrorCode, DiffusionUniformKh, Field
+from parcels import FieldSet, ParticleSet  # , AdvectionRK4, JITParticle
+from parcels import Variable, ErrorCode, Field  # DiffusionUniformKh,
 from datetime import timedelta
 from datetime import datetime
 import numpy as np
