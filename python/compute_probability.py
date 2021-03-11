@@ -8,31 +8,28 @@ Merges 2d likelihood of different OP output files.
 1 output file per source.
 """
 
+compute_mean = False
+true_time = False
+min_obs_lenght = 370  # for analyising fail1 set of simulations
 
-def moving_average(x, w):
-    return np.convolve(x, np.ones(w), 'valid') / w
 
-
-def running_average_field(array, window=30):
+def average_field(array, window=30):
     nt, nx, ny = array.shape
 
-    averaged = np.zeros((nt - window + 1, nx, ny))
-    index_slice = int((window-1)/2)
-    time_array = np.linspace(index_slice, nt-index_slice+1, nt+1-window,
-                             dtype=int)
+    new_t_dim = nt//window
+    averaged = np.zeros((new_t_dim-1, nx, ny))
+    time_array = np.array(range(1, new_t_dim))
 
-    for i in range(nx):
-        for j in range(ny):
+    for t in range(1, nt//window):
+        index_slice = slice((t-1)*window, t*window)
+        averaged[t-1] = np.mean(array[index_slice, :, :], axis=0)
 
-            averaged[:, i, j] = moving_average(array[:, i, j], window)
+    return averaged, time_array*window
 
-    return averaged, time_array
-
-
-compute_mean = True
 
 # ###### Paramaters ########
 # parameters for binning
+avg_label = ''
 domain_limits = [[-73.0, 24.916666], [-79.916664, -5.0833335]]
 number_bins = (120, 90)  # original from cmems is (1176, 899)
 lon_range = np.linspace(domain_limits[0][0], domain_limits[0][1],
@@ -67,18 +64,18 @@ parameter = {'domain_limits': domain_limits,
 
 for loc in sources:
     print(loc)
-    path_2_file = f"../data/simulations/smoc/source_{loc}_K10_N100000.nc"
+    path_2_file = f"../data/simulations/fail1/br-cr_{loc}_D1600_N100000.nc"
     particles = xr.load_dataset(path_2_file)
     n = particles.dims['traj']
-    time = particles.dims['obs']
+    time = min_obs_lenght  # particles.dims['obs']
     h = np.zeros((time, *number_bins))
 
     for t in range(time):
         lons = particles['lon'][:, t].values
-        index = np.where(np.isnan(lons) == False)  # ugly statement
+        index = np.where(~np.isnan(lons))  # ugly statement
         lons = lons[index]
         lats = particles['lat'][:, t].values
-        index = np.where(np.isnan(lats) == False)
+        index = np.where(~np.isnan(lats))
         lats = lats[index]
         number_particles = len(lats)
         H, x_edges, y_edges = np.histogram2d(lons, lats, bins=number_bins,
@@ -89,17 +86,16 @@ for loc in sources:
 
 ################
 if compute_mean:
-
+    avg_label = '_average'
     avg_likelihood = {}
     for loc in sources:
-        mean, new_time = running_average_field(likelihood[loc], window=30)
+        mean, new_time = average_field(likelihood[loc], window=30)
 
         avg_likelihood[loc] = mean
 
     likelihood = avg_likelihood
     parameter['time_array'] = new_time
-    time = new_time
-
+    time = min_obs_lenght//30 - 1
 
 # Normalizing constant (sum of all hypothesis)
 normalizing_constant = np.zeros((time, *number_bins))
@@ -122,6 +118,9 @@ for k, loc in enumerate(sources):
     posterior[loc] = aux
 
 # Saving the likelihood, posteior probabilityand parameters
-np.save('../data/analysis/posterior_smoc.npy', posterior, allow_pickle=True)
-np.save('../data/analysis/likelihood_smoc.npy', likelihood, allow_pickle=True)
-np.save('../data/analysis/params_smoc.npy', parameter, allow_pickle=True)
+np.save(f'../data/analysis/fail1/posterior{avg_label}.npy',
+        posterior, allow_pickle=True)
+np.save(f'../data/analysis/fail1/likelihood{avg_label}.npy',
+        likelihood, allow_pickle=True)
+np.save(f'../data/analysis/fail1/params{avg_label}.npy',
+        parameter, allow_pickle=True)
