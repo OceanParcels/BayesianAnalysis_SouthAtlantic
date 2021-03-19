@@ -1,4 +1,4 @@
-from parcels import FieldSet, ParticleSet  # , AdvectionRK4, JITParticle
+from parcels import FieldSet, ParticleSet, JITParticle  # , AdvectionRK4
 from parcels import Variable, ErrorCode, Field  # DiffusionUniformKh,
 from datetime import timedelta
 from datetime import datetime
@@ -6,6 +6,7 @@ import numpy as np
 import sys
 from parcels import ParcelsRandom
 import math
+import local_kernels as kernels
 
 resusTime = 10
 shoreTime = 10
@@ -14,7 +15,6 @@ n_days = 10  # 22*30  # number of days to simulate
 K_bar = 10  # diffusion value
 stored_dt = 1  # hours
 loc = sys.argv[1]
-repeatdt = timedelta(days=30)
 # The file go from:
 # 23 oct 2018 - 23 nov 2018
 # 23 nov 2018 - 23 dic 2018
@@ -141,126 +141,13 @@ pset = ParticleSet.from_list(fieldset=fieldset,
 
 
 ###############################################################################
-# KERNELS
-###############################################################################
-
-
-def delete_particle(particle, fieldset, time):  # indices=indices):
-    particle.delete()
-
-
-def beach(particle, fieldset, time):
-    if particle.beach == 0:
-        dist = fieldset.distance2shore[time, particle.depth, particle.lat,
-                                       particle.lon]
-        if dist < 10:
-            beach_prob = math.exp(-particle.dt/(particle.coastPar*86400.))
-            if ParcelsRandom.random(0., 1.) > beach_prob:
-                particle.beach = 1
-    # Now the part where we build in the resuspension
-    elif particle.beach == 1:
-        resus_prob = math.exp(-particle.dt/(particle.resus_t*86400.))
-        if ParcelsRandom.random(0., 1.) > resus_prob:
-            particle.beach = 0
-    # Update the age of the particle
-    particle.age += particle.dt
-
-
-def AntiBeachNudging(particle, fieldset, time):
-    """
-    The nudging current is 1 m s^-1, which ought to be sufficient to overpower
-    any coastal current (I hope) and push our particle back out to sea so as to
-    not get stuck
-
-    update 11/03/2020: Following tests and discussions with Cleo, the nudging
-    current will now kick in starting at 500m from the coast, since otherwise
-    the particles tended to get stuck if we used the velocity treshhold.
-    """
-
-    if fieldset.distance2shore[time, particle.depth,
-                               particle.lat, particle.lon] < 0.5:
-        borUab = fieldset.borU[time, particle.depth, particle.lat,
-                               particle.lon]
-        borVab = fieldset.borV[time, particle.depth, particle.lat,
-                               particle.lon]
-        particle.lon -= borUab*particle.dt
-        particle.lat -= borVab*particle.dt
-
-
-def AdvectionRK4_floating(particle, fieldset, time):
-    """Advection of particles using fourth-order Runge-Kutta integration.
-    Function needs to be converted to Kernel object before execution
-
-    A particle only moves if it has not beached (rather obviously)
-    """
-    if particle.beach == 0:
-        particle.distance = fieldset.distance2shore[time, particle.depth,
-                                                    particle.lat, particle.lon]
-
-        # if particle.lon > 180:
-        #     particle.lon -= 360
-        # if particle.lon < -180:
-        #     particle.lon += 360
-        (u1, v1) = fieldset.UV[time, particle.depth, particle.lat,
-                               particle.lon]
-        lon1, lat1 = (particle.lon + u1*.5*particle.dt,
-                      particle.lat + v1*.5*particle.dt)
-        # if lon1 > 180:
-        #     lon1 -= 360
-        # if lon1 < -180:
-        #     lon1 += 360
-        (u2, v2) = fieldset.UV[time + .5 * particle.dt, particle.depth,
-                               lat1, lon1]
-        lon2, lat2 = (particle.lon + u2*.5*particle.dt,
-                      particle.lat + v2*.5*particle.dt)
-        # if lon2 > 180:
-        #     lon2 -= 360
-        # if lon2 < -180:
-        #     lon2 += 360
-        (u3, v3) = fieldset.UV[time + .5 * particle.dt, particle.depth,
-                               lat2, lon2]
-        lon3, lat3 = (particle.lon + u3*particle.dt,
-                      particle.lat + v3*particle.dt)
-
-        # if lon3 > 180:
-        #     lon3 -= 360
-        # if lon3 < -180:
-        #     lon3 += 360
-        (u4, v4) = fieldset.UV[time + particle.dt, particle.depth, lat3, lon3]
-
-        particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt
-        # if particle.lon > 180:
-        #     particle.lon -= 360
-        # if particle.lon < -180:
-        #     particle.lon += 360
-        particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt
-
-
-def BrownianMotion2D(particle, fieldset, time):
-    """Kernel for simple Brownian particle diffusion in zonal and meridional
-    direction. Assumes that fieldset has fields Kh_zonal and Kh_meridional
-    we don't want particles to jump on land and thereby beach"""
-    if particle.beach == 0:
-        r = 1/3.
-        kh_meridional = fieldset.Kh_meridional[time, particle.depth,
-                                               particle.lat, particle.lon]
-        lat_p = particle.lat + ParcelsRandom.uniform(-1., 1.) * \
-            math.sqrt(2*math.fabs(particle.dt)*kh_meridional/r)
-        kh_zonal = fieldset.Kh_zonal[time, particle.depth,
-                                     particle.lat, particle.lon]
-        lon_p = particle.lon + ParcelsRandom.uniform(-1., 1.) * \
-            math.sqrt(2*math.fabs(particle.dt)*kh_zonal/r)
-        particle.lon = lon_p
-        particle.lat = lat_p
-
-
-###############################################################################
 # And now the overall kernel                                                  #
 ###############################################################################
-totalKernel = pset.Kernel(AdvectionRK4_floating) + \
-    pset.Kernel(BrownianMotion2D) + pset.Kernel(AntiBeachNudging) + \
-    pset.Kernel(beach)
 
+totalKernel = pset.Kernel(kernels.AdvectionRK4_floating) + \
+    pset.Kernel(kernels.BrownianMotion2D) + \
+    pset.Kernel(kernels.AntiBeachNudging) + \
+    pset.Kernel(kernels.beach)
 
 # Output file
 output_file = pset.ParticleFile(
@@ -272,5 +159,5 @@ pset.execute(totalKernel,
              runtime=timedelta(days=n_days),
              dt=timedelta(hours=1),
              output_file=output_file,
-             recovery={ErrorCode.ErrorOutOfBounds: delete_particle})
+             recovery={ErrorCode.ErrorOutOfBounds: kernels.delete_particle})
 output_file.close()

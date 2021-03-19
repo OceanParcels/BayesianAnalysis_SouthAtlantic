@@ -8,7 +8,8 @@ Merges 2d likelihood of different OP output files.
 1 output file per source.
 """
 
-compute_mean = False
+compute_mean = True
+average_window = 660
 true_time = False
 min_obs_lenght = 370  # for analyising fail1 set of simulations
 
@@ -17,12 +18,12 @@ def average_field(array, window=30):
     nt, nx, ny = array.shape
 
     new_t_dim = nt//window
-    averaged = np.zeros((new_t_dim-1, nx, ny))
+    averaged = np.zeros((new_t_dim, nx, ny))
     time_array = np.array(range(1, new_t_dim))
 
-    for t in range(1, nt//window):
-        index_slice = slice((t-1)*window, t*window)
-        averaged[t-1] = np.mean(array[index_slice, :, :], axis=0)
+    for t in range(0, nt//window):
+        index_slice = slice((t)*window, (t+1)*window)
+        averaged[t] = np.mean(array[index_slice, :, :], axis=0)
 
     return averaged, time_array*window
 
@@ -49,7 +50,7 @@ sources = ['Rio-de-Janeiro',
            'Cuvo',
            'Chiloango-Congo',
            'Luanda',
-           'Itajai',
+           # 'Itajai',
            'Paraiba']  # list(priors.keys())
 
 number_sources = len(sources)
@@ -64,10 +65,10 @@ parameter = {'domain_limits': domain_limits,
 
 for loc in sources:
     print(loc)
-    path_2_file = f"../data/simulations/fail1/br-cr_{loc}_D1600_N100000.nc"
+    path_2_file = f"../data/simulations/smoc/source_{loc}_K10_N100000.nc"
     particles = xr.load_dataset(path_2_file)
     n = particles.dims['traj']
-    time = min_obs_lenght  # particles.dims['obs']
+    time = particles.dims['obs']  # min_obs_lenght
     h = np.zeros((time, *number_bins))
 
     for t in range(time):
@@ -86,16 +87,16 @@ for loc in sources:
 
 ################
 if compute_mean:
-    avg_label = '_average'
+    avg_label = f'_average{average_window}'
     avg_likelihood = {}
     for loc in sources:
-        mean, new_time = average_field(likelihood[loc], window=30)
+        mean, new_time = average_field(likelihood[loc], window=average_window)
 
         avg_likelihood[loc] = mean
 
     likelihood = avg_likelihood
     parameter['time_array'] = new_time
-    time = min_obs_lenght//30 - 1
+    time = time//average_window
 
 # Normalizing constant (sum of all hypothesis)
 normalizing_constant = np.zeros((time, *number_bins))
@@ -104,6 +105,7 @@ for t in range(time):
     total = np.zeros((number_sources, *number_bins))
 
     for j, loc in enumerate(sources):
+        print(t, j, priors['Mean'][loc])
         total[j] = likelihood[loc][t]*priors['Mean'][loc]
 
     normalizing_constant[t] = np.sum(total, axis=0)
@@ -118,9 +120,9 @@ for k, loc in enumerate(sources):
     posterior[loc] = aux
 
 # Saving the likelihood, posteior probabilityand parameters
-np.save(f'../data/analysis/fail1/posterior{avg_label}.npy',
+np.save(f'../data/analysis/posterior_smoc{avg_label}.npy',
         posterior, allow_pickle=True)
-np.save(f'../data/analysis/fail1/likelihood{avg_label}.npy',
+np.save('../data/analysis/likelihood_smoc.npy',
         likelihood, allow_pickle=True)
-np.save(f'../data/analysis/fail1/params{avg_label}.npy',
+np.save(f'../data/analysis/params_smoc{avg_label}.npy',
         parameter, allow_pickle=True)
