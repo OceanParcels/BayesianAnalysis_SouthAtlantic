@@ -90,12 +90,13 @@ def create_border_current(landmask):
 
     Output: two 2D arrays, one for each camponent of the velocity.
     """
+    shore = get_shore_cells(landmask)
     coastal = get_coastal_cells(landmask)
     Ly = np.roll(landmask, -1, axis=0) - np.roll(landmask, 1, axis=0)
     Lx = np.roll(landmask, -1, axis=1) - np.roll(landmask, 1, axis=1)
 
-    v_x = np.ma.masked_where(coastal == 0, -Lx)
-    v_y = np.ma.masked_where(coastal == 0, -Ly)
+    v_x = -Lx*(coastal + shore)
+    v_y = -Ly*(coastal + shore)
 
     magnitude = np.sqrt(v_y**2 + v_x**2)
     # the coastal cells between land create a problem. Magnitude there is zero
@@ -103,12 +104,10 @@ def create_border_current(landmask):
     ny, nx = np.where(magnitude == 0)
     magnitude[ny, nx] = 1
 
-    v_x = v_x/magnitude
-    v_y = v_y/magnitude
-    v_x.set_fill_value(value=0)
-    v_y.set_fill_value(value=0)
+    v_x = v_x/magnitude  # /1000
+    v_y = v_y/magnitude  # /1000
 
-    return v_x.data, v_y.data
+    return v_x, v_y
 
 
 def distance_to_shore(landmask, dx=1):

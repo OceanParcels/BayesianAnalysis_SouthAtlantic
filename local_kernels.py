@@ -1,4 +1,5 @@
 from parcels import ParcelsRandom
+from parcels import AdvectionRK4, DiffusionUniformKh
 import math
 
 
@@ -7,6 +8,7 @@ def delete_particle(particle, fieldset, time):  # indices=indices):
 
 
 def beach(particle, fieldset, time):
+
     if particle.beach == 0:
         dist = fieldset.distance2shore[time, particle.depth, particle.lat,
                                        particle.lon]
@@ -34,62 +36,57 @@ def AntiBeachNudging(particle, fieldset, time):
     the particles tended to get stuck if we used the velocity treshhold.
     """
 
+    particle.distance = fieldset.distance2shore[time, particle.depth,
+                                                particle.lat, particle.lon]
+
     if fieldset.distance2shore[time, particle.depth,
                                particle.lat, particle.lon] < 0.5:
         borUab = fieldset.borU[time, particle.depth, particle.lat,
                                particle.lon]
         borVab = fieldset.borV[time, particle.depth, particle.lat,
                                particle.lon]
-        particle.lon -= borUab*particle.dt
-        particle.lat -= borVab*particle.dt
+        particle.lon += borUab*particle.dt
+        particle.lat += borVab*particle.dt
+
+
+def advection_beach(particle, fieldset, time):
+    """This doesn't work"""
+    if particle.beach == 0:
+        AdvectionRK4(particle, fieldset, time)
+
+
+def diffusion_beach(particle, fieldset, time):
+    """This doesn't work"""
+    if particle.beach == 0:
+        DiffusionUniformKh(particle, fieldset, time)
 
 
 def AdvectionRK4_floating(particle, fieldset, time):
     """Advection of particles using fourth-order Runge-Kutta integration.
     Function needs to be converted to Kernel object before execution
-
     A particle only moves if it has not beached (rather obviously)
     """
     if particle.beach == 0:
         particle.distance = fieldset.distance2shore[time, particle.depth,
                                                     particle.lat, particle.lon]
 
-        # if particle.lon > 180:
-        #     particle.lon -= 360
-        # if particle.lon < -180:
-        #     particle.lon += 360
         (u1, v1) = fieldset.UV[time, particle.depth, particle.lat,
                                particle.lon]
         lon1, lat1 = (particle.lon + u1*.5*particle.dt,
                       particle.lat + v1*.5*particle.dt)
-        # if lon1 > 180:
-        #     lon1 -= 360
-        # if lon1 < -180:
-        #     lon1 += 360
+
         (u2, v2) = fieldset.UV[time + .5 * particle.dt, particle.depth,
                                lat1, lon1]
         lon2, lat2 = (particle.lon + u2*.5*particle.dt,
                       particle.lat + v2*.5*particle.dt)
-        # if lon2 > 180:
-        #     lon2 -= 360
-        # if lon2 < -180:
-        #     lon2 += 360
         (u3, v3) = fieldset.UV[time + .5 * particle.dt, particle.depth,
                                lat2, lon2]
         lon3, lat3 = (particle.lon + u3*particle.dt,
                       particle.lat + v3*particle.dt)
 
-        # if lon3 > 180:
-        #     lon3 -= 360
-        # if lon3 < -180:
-        #     lon3 += 360
         (u4, v4) = fieldset.UV[time + particle.dt, particle.depth, lat3, lon3]
 
         particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt
-        # if particle.lon > 180:
-        #     particle.lon -= 360
-        # if particle.lon < -180:
-        #     particle.lon += 360
         particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt
 
 
