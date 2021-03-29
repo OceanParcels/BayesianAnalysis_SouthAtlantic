@@ -11,7 +11,7 @@ import local_kernels as kernels
 
 resusTime = 10
 shoreTime = 10
-n_points = 10000  # particles per sampling site
+n_points = 100  # particles per sampling site
 n_days = 10  # 22*30  # number of days to simulate
 K_bar = 10  # diffusion value
 stored_dt = 1  # hours
@@ -23,7 +23,7 @@ loc = sys.argv[1]
 
 # data = '../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
 data = 'data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
-output_path = f'data/debug_10.nc'
+output_path = f'data/debug_12.nc'
 # data = '/data/oceanparcels/input_data/CMEMS/' + \
 #        'GLOBAL_ANALYSIS_FORECAST_PHY_001_024/*.nc'  # gemini
 # output_path = f'/scratch/cpierard/source_{loc}_release.nc'
@@ -120,8 +120,8 @@ np.random.seed(0)  # to repeat experiment in the same conditions
 
 lon_cluster = [river_sources[loc][1]]*n_points
 lat_cluster = [river_sources[loc][0]]*n_points
-lon_cluster = np.array(lon_cluster)+(np.random.random(len(lon_cluster))-0.5)/2
-lat_cluster = np.array(lat_cluster)+(np.random.random(len(lat_cluster))-0.5)/2
+lon_cluster = np.array(lon_cluster)+(np.random.random(len(lon_cluster))-0.5)/24
+lat_cluster = np.array(lat_cluster)+(np.random.random(len(lat_cluster))-0.5)/24
 beached = np.zeros_like(lon_cluster)
 age_par = np.zeros_like(lon_cluster)
 

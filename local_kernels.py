@@ -49,18 +49,6 @@ def AntiBeachNudging(particle, fieldset, time):
         particle.lat += borVab*particle.dt
 
 
-def advection_beach(particle, fieldset, time):
-    """This doesn't work"""
-    if particle.beach == 0:
-        AdvectionRK4(particle, fieldset, time)
-
-
-def diffusion_beach(particle, fieldset, time):
-    """This doesn't work"""
-    if particle.beach == 0:
-        DiffusionUniformKh(particle, fieldset, time)
-
-
 def AdvectionRK4_floating(particle, fieldset, time):
     """Advection of particles using fourth-order Runge-Kutta integration.
     Function needs to be converted to Kernel object before execution
@@ -95,14 +83,11 @@ def BrownianMotion2D(particle, fieldset, time):
     direction. Assumes that fieldset has fields Kh_zonal and Kh_meridional
     we don't want particles to jump on land and thereby beach"""
     if particle.beach == 0:
-        r = 1/3.
-        kh_meridional = fieldset.Kh_meridional[time, particle.depth,
-                                               particle.lat, particle.lon]
-        lat_p = particle.lat + ParcelsRandom.uniform(-1., 1.) * \
-            math.sqrt(2*math.fabs(particle.dt)*kh_meridional/r)
-        kh_zonal = fieldset.Kh_zonal[time, particle.depth,
-                                     particle.lat, particle.lon]
-        lon_p = particle.lon + ParcelsRandom.uniform(-1., 1.) * \
-            math.sqrt(2*math.fabs(particle.dt)*kh_zonal/r)
-        particle.lon = lon_p
-        particle.lat = lat_p
+        dWx = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+        dWy = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+
+        bx = math.sqrt(2 * fieldset.Kh_zonal[particle])
+        by = math.sqrt(2 * fieldset.Kh_meridional[particle])
+
+        particle.lon += bx * dWx
+        particle.lat += by * dWy
