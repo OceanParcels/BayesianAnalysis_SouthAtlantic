@@ -23,28 +23,6 @@ def make_landmask(fielddata, indices):
     return landmask
 
 
-def make_grid(fielddata, indices):
-    """Returns landmask where land = 1 and ocean = 0
-
-    - fielddata is the path to an output of a model (netcdf file expected).
-    - indices is a dictionary such as:
-        indices = {'lat': slice(1, 900), 'lon': slice(1284, 2460)}.
-
-    Output: 2D masked array array containing the landmask, 1D array with the
-            latitudes and a 1D array with the longitudes.
-
-    Warning: tested for the CMEMS model outputs where I asume that the variable
-            uo exists.
-    """
-    datafile = Dataset(fielddata)
-    landmask = datafile.variables['uo'][0, 0, indices['lat'], indices['lon']]
-    landmask = np.ma.masked_invalid(landmask)
-    lat = datafile.variables['latitude'][:].data
-    lon = datafile.variables['longitude'][:].data
-
-    return landmask, lat, lon
-
-
 def get_coastal_cells(landmask):
     """Function that detects the coastal cells, i.e. the ocean cells directly
     next to land. Computes the Laplacian of landmask.
@@ -83,10 +61,12 @@ def get_shore_cells(landmask):
     return shore
 
 
-def create_border_current(landmask):
+def create_border_current(landmask, double_cell=False):
     """Function that creates a border current 1 m/s away from the shore.
 
     - landmask: the land mask built using `make_landmask`.
+    - double_cell: Boolean for determining if you want a double cell.
+      Default set to False.
 
     Output: two 2D arrays, one for each camponent of the velocity.
     """
@@ -95,8 +75,12 @@ def create_border_current(landmask):
     Ly = np.roll(landmask, -1, axis=0) - np.roll(landmask, 1, axis=0)
     Lx = np.roll(landmask, -1, axis=1) - np.roll(landmask, 1, axis=1)
 
-    v_x = -Lx*(coastal + shore)
-    v_y = -Ly*(coastal + shore)
+    if double_cell:
+        v_x = -Lx*(coastal+shore)
+        v_y = -Ly*(coastal+shore)
+    else:
+        v_x = -Lx*(coastal)
+        v_y = -Ly*(coastal)
 
     magnitude = np.sqrt(v_y**2 + v_x**2)
     # the coastal cells between land create a problem. Magnitude there is zero
@@ -104,8 +88,8 @@ def create_border_current(landmask):
     ny, nx = np.where(magnitude == 0)
     magnitude[ny, nx] = 1
 
-    v_x = v_x/magnitude  # /1000
-    v_y = v_y/magnitude  # /1000
+    v_x = v_x/magnitude
+    v_y = v_y/magnitude
 
     return v_x, v_y
 
@@ -130,19 +114,8 @@ def distance_to_shore(landmask, dx=1):
         landmask_i += ci
         dist += ci*(i+2)
         i += 1
+
     return dist*dx
-
-
-# def distance_to_shore(landmask, iterations=20, dx=1):
-#     ci = get_coastal_cells(landmask)
-#     landmask_i = landmask + ci
-#     dist = ci
-#
-#     for i in range(iterations):
-#         ci = get_coastal_cells(landmask_i)
-#         landmask_i += ci
-#         dist += ci*(i+1)
-#     return dist*dx
 
 
 # Getting my data saved for simulations

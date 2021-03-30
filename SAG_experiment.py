@@ -5,8 +5,6 @@ from datetime import datetime
 from parcels import GeographicPolar, Geographic
 import numpy as np
 import sys
-from parcels import ParcelsRandom
-import math
 import local_kernels as kernels
 
 resusTime = 10
@@ -23,7 +21,7 @@ loc = sys.argv[1]
 
 # data = '../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
 data = 'data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
-output_path = f'data/debug_12.nc'
+output_path = f'data/debug_13.nc'
 # data = '/data/oceanparcels/input_data/CMEMS/' + \
 #        'GLOBAL_ANALYSIS_FORECAST_PHY_001_024/*.nc'  # gemini
 # output_path = f'/scratch/cpierard/source_{loc}_release.nc'
@@ -145,6 +143,9 @@ pset = ParticleSet.from_list(fieldset=fieldset,
 ###############################################################################
 # And now the overall kernel                                                  #
 ###############################################################################
+def delete_particle(particle, fieldset, time):
+    particle.delete()
+
 
 totalKernel = pset.Kernel(kernels.AdvectionRK4_floating) + \
     pset.Kernel(kernels.AntiBeachNudging) + \
@@ -161,5 +162,5 @@ pset.execute(totalKernel,
              runtime=timedelta(days=n_days),
              dt=timedelta(hours=1),
              output_file=output_file,
-             recovery={ErrorCode.ErrorOutOfBounds: kernels.delete_particle})
+             recovery={ErrorCode.ErrorOutOfBounds: delete_particle})
 output_file.close()

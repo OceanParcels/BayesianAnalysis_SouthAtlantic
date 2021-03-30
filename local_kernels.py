@@ -1,10 +1,5 @@
 from parcels import ParcelsRandom
-from parcels import AdvectionRK4, DiffusionUniformKh
 import math
-
-
-def delete_particle(particle, fieldset, time):  # indices=indices):
-    particle.delete()
 
 
 def beach(particle, fieldset, time):
@@ -55,25 +50,19 @@ def AdvectionRK4_floating(particle, fieldset, time):
     A particle only moves if it has not beached (rather obviously)
     """
     if particle.beach == 0:
-        particle.distance = fieldset.distance2shore[time, particle.depth,
-                                                    particle.lat, particle.lon]
-
-        (u1, v1) = fieldset.UV[time, particle.depth, particle.lat,
-                               particle.lon]
+        (u1, v1) = fieldset.UV[particle]
         lon1, lat1 = (particle.lon + u1*.5*particle.dt,
                       particle.lat + v1*.5*particle.dt)
-
-        (u2, v2) = fieldset.UV[time + .5 * particle.dt, particle.depth,
-                               lat1, lon1]
+        (u2, v2) = fieldset.UV[time + .5 * particle.dt,
+                               particle.depth, lat1, lon1, particle]
         lon2, lat2 = (particle.lon + u2*.5*particle.dt,
                       particle.lat + v2*.5*particle.dt)
-        (u3, v3) = fieldset.UV[time + .5 * particle.dt, particle.depth,
-                               lat2, lon2]
+        (u3, v3) = fieldset.UV[time + .5 * particle.dt,
+                               particle.depth, lat2, lon2, particle]
         lon3, lat3 = (particle.lon + u3*particle.dt,
                       particle.lat + v3*particle.dt)
-
-        (u4, v4) = fieldset.UV[time + particle.dt, particle.depth, lat3, lon3]
-
+        (u4, v4) = fieldset.UV[time + particle.dt,
+                               particle.depth, lat3, lon3, particle]
         particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt
         particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt
 
