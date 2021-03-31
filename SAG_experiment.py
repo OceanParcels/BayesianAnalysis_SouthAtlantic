@@ -15,7 +15,7 @@ start_time = datetime.strptime('2016-04-01 12:00:00',
 # end_time = '2020-08-31'
 # delta = 1613 days
 n_points = 100000  # particles per sampling site
-n_days = 3*30  # 1600  # number of days to simulate
+n_days = 1600  # number of days to simulate
 K_bar = 10  # diffusion value
 stored_dt = 24  # hours
 loc = sys.argv[1]
@@ -114,7 +114,7 @@ np.random.seed(0)  # to repeat experiment in the same conditions
 # Create the cluster of particles around the sampling site
 # with a radius of 1/24 deg (?).
 # time = datetime.datetime.strptime('2018-01-01 12:00:00', '%Y-%m-%d %H:%M:%S')
-repeatdt = timedelta(hours=3)
+
 lon_cluster = [river_sources[loc][1]]*n_points
 lat_cluster = [river_sources[loc][0]]*n_points
 lon_cluster = np.array(lon_cluster)+(np.random.random(len(lon_cluster))-0.5)/24
@@ -173,9 +173,6 @@ def AntiBeachNudging(particle, fieldset, time):
     the particles tended to get stuck if we used the velocity treshhold.
     """
 
-    particle.distance = fieldset.distance2shore[time, particle.depth,
-                                                particle.lat, particle.lon]
-
     if fieldset.distance2shore[time, particle.depth,
                                particle.lat, particle.lon] < 0.5:
         borUab = fieldset.borU[time, particle.depth, particle.lat,
@@ -192,19 +189,21 @@ def AdvectionRK4_floating(particle, fieldset, time):
     A particle only moves if it has not beached (rather obviously)
     """
     if particle.beach == 0:
-        (u1, v1) = fieldset.UV[particle]
+        particle.distance = fieldset.distance2shore[time, particle.depth,
+                                                    particle.lat, particle.lon]
+        (u1, v1) = fieldset.UV[time, particle.depth, particle.lat,
+                               particle.lon]
         lon1, lat1 = (particle.lon + u1*.5*particle.dt,
                       particle.lat + v1*.5*particle.dt)
-        (u2, v2) = fieldset.UV[time + .5 * particle.dt,
-                               particle.depth, lat1, lon1, particle]
+        (u2, v2) = fieldset.UV[time + .5 * particle.dt, particle.depth,
+                               lat1, lon1]
         lon2, lat2 = (particle.lon + u2*.5*particle.dt,
                       particle.lat + v2*.5*particle.dt)
-        (u3, v3) = fieldset.UV[time + .5 * particle.dt,
-                               particle.depth, lat2, lon2, particle]
+        (u3, v3) = fieldset.UV[time + .5 * particle.dt, particle.depth,
+                               lat2, lon2]
         lon3, lat3 = (particle.lon + u3*particle.dt,
                       particle.lat + v3*particle.dt)
-        (u4, v4) = fieldset.UV[time + particle.dt,
-                               particle.depth, lat3, lon3, particle]
+        (u4, v4) = fieldset.UV[time + particle.dt, particle.depth, lat3, lon3]
         particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt
         particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt
 
@@ -214,14 +213,17 @@ def BrownianMotion2D(particle, fieldset, time):
     direction. Assumes that fieldset has fields Kh_zonal and Kh_meridional
     we don't want particles to jump on land and thereby beach"""
     if particle.beach == 0:
-        dWx = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
-        dWy = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
-
-        bx = math.sqrt(2 * fieldset.Kh_zonal[particle])
-        by = math.sqrt(2 * fieldset.Kh_meridional[particle])
-
-        particle.lon += bx * dWx
-        particle.lat += by * dWy
+        r = 1/3.
+        kh_meridional = fieldset.Kh_meridional[time, particle.depth,
+                                               particle.lat, particle.lon]
+        lat_p = particle.lat + ParcelsRandom.uniform(-1., 1.) * \
+            math.sqrt(2*math.fabs(particle.dt)*kh_meridional/r)
+        kh_zonal = fieldset.Kh_zonal[time, particle.depth,
+                                     particle.lat, particle.lon]
+        lon_p = particle.lon + ParcelsRandom.uniform(-1., 1.) * \
+            math.sqrt(2*math.fabs(particle.dt)*kh_zonal/r)
+        particle.lon = lon_p
+        particle.lat = lat_p
 
 ###############################################################################
 # And now the overall kernel                                                  #
