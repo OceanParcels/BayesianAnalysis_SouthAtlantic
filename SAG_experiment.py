@@ -7,6 +7,7 @@ import sys
 from parcels import ParcelsRandom
 import math
 from parcels import GeographicPolar, Geographic
+import local_kernels as kernels
 
 resusTime = 69
 shoreTime = 10
@@ -144,45 +145,6 @@ def delete_particle(particle, fieldset, time):
     particle.delete()
 
 
-def beach(particle, fieldset, time):
-
-    if particle.beach == 0:
-        dist = fieldset.distance2shore[time, particle.depth, particle.lat,
-                                       particle.lon]
-        if dist < 10:
-            beach_prob = math.exp(-particle.dt/(particle.coastPar*86400.))
-            if ParcelsRandom.random(0., 1.) > beach_prob:
-                particle.beach = 1
-    # Now the part where we build in the resuspension
-    elif particle.beach == 1:
-        resus_prob = math.exp(-particle.dt/(particle.resus_t*86400.))
-        if ParcelsRandom.random(0., 1.) > resus_prob:
-            particle.beach = 0
-    # Update the age of the particle
-    particle.age += particle.dt
-
-
-def AntiBeachNudging(particle, fieldset, time):
-    """
-    The nudging current is 1 m s^-1, which ought to be sufficient to overpower
-    any coastal current (I hope) and push our particle back out to sea so as to
-    not get stuck
-
-    update 11/03/2020: Following tests and discussions with Cleo, the nudging
-    current will now kick in starting at 500m from the coast, since otherwise
-    the particles tended to get stuck if we used the velocity treshhold.
-    """
-
-    if fieldset.distance2shore[time, particle.depth,
-                               particle.lat, particle.lon] < 0.5:
-        borUab = fieldset.borU[time, particle.depth, particle.lat,
-                               particle.lon]
-        borVab = fieldset.borV[time, particle.depth, particle.lat,
-                               particle.lon]
-        particle.lon += borUab*particle.dt
-        particle.lat += borVab*particle.dt
-
-
 def AdvectionRK4_floating(particle, fieldset, time):
     """Advection of particles using fourth-order Runge-Kutta integration.
     Function needs to be converted to Kernel object before execution
@@ -230,10 +192,10 @@ def BrownianMotion2D(particle, fieldset, time):
 ###############################################################################
 
 
-totalKernel = pset.Kernel(AdvectionRK4_floating) + \
-    pset.Kernel(BrownianMotion2D) + \
-    pset.Kernel(AntiBeachNudging) + \
-    pset.Kernel(beach)
+totalKernel = pset.Kernel(kernels.AdvectionRK4_floating) + \
+    pset.Kernel(kernels.BrownianMotion2D) + \
+    pset.Kernel(kernels.AntiBeachNudging) + \
+    pset.Kernel(kernels.beach)
 
 # Output file
 output_file = pset.ParticleFile(
