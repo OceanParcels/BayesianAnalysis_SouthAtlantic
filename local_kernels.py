@@ -31,9 +31,6 @@ def AntiBeachNudging(particle, fieldset, time):
     the particles tended to get stuck if we used the velocity treshhold.
     """
 
-    particle.distance = fieldset.distance2shore[time, particle.depth,
-                                                particle.lat, particle.lon]
-
     if fieldset.distance2shore[time, particle.depth,
                                particle.lat, particle.lon] < 0.5:
         borUab = fieldset.borU[time, particle.depth, particle.lat,
@@ -50,6 +47,10 @@ def AdvectionRK4_floating(particle, fieldset, time):
     A particle only moves if it has not beached (rather obviously)
     """
     if particle.beach == 0:
+
+        particle.distance = fieldset.distance2shore[time, particle.depth,
+                                                    particle.lat, particle.lon]
+
         (u1, v1) = fieldset.UV[particle]
         lon1, lat1 = (particle.lon + u1*.5*particle.dt,
                       particle.lat + v1*.5*particle.dt)
