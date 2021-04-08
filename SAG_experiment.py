@@ -7,6 +7,7 @@ import numpy as np
 import sys
 import local_kernels as kernels
 
+series = 4
 resusTime = 10
 shoreTime = 10
 n_points = 100  # particles per sampling site
@@ -21,7 +22,7 @@ loc = sys.argv[1]
 
 # data = '../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
 data = 'data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
-output_path = f'data/debug_13.nc'
+output_path = f'data/sa-S{series:02d}.nc'
 # data = '/data/oceanparcels/input_data/CMEMS/' + \
 #        'GLOBAL_ANALYSIS_FORECAST_PHY_001_024/*.nc'  # gemini
 # output_path = f'/scratch/cpierard/source_{loc}_release.nc'
