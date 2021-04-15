@@ -9,12 +9,10 @@ Merges 2d likelihood of different OP output files.
 """
 series = 3
 compute_mean = True
-average_window = 1500
-true_time = 1600
-min_obs_lenght = 370  # for analyising fail1 set of simulations
+average_window = 30
 
 
-def average_field(array, window=30):
+def average_field(array, window=30, normalized=True):
     nt, nx, ny = array.shape
 
     new_t_dim = nt//window
@@ -23,7 +21,16 @@ def average_field(array, window=30):
 
     for t in range(0, new_t_dim):
         index_slice = slice((t)*window, (t+1)*window)
-        averaged[t] = np.mean(array[index_slice, :, :], axis=0)
+        mean_aux = np.mean(array[index_slice, :, :], axis=0)
+
+        if normalized:
+            if mean_aux.sum() == 0:
+                print(f'-- mean_aux.sum() = {mean_aux.sum()}')
+                averaged[t] = np.zeros_like(mean_aux)
+            else:
+                averaged[t] = mean_aux/mean_aux.sum()
+        else:
+            averaged[t] = mean_aux
 
     return averaged, time_array*window
 
@@ -42,6 +49,7 @@ lat_range = np.linspace(domain_limits[1][0], domain_limits[1][1],
 priors = pd.read_csv('../data/sources/river_inputs.csv', index_col=0)
 likelihood = {}
 posterior = {}
+counts = {}
 sources = ['Rio-de-Janeiro',
            'Rio-de-la-Plata',
            'Cape-Town',
@@ -81,7 +89,7 @@ for loc in sources:
         lats = lats[index]
         number_particles = len(lats)
         H, x_edges, y_edges = np.histogram2d(lons, lats, bins=number_bins,
-                                             range=domain_limits, density=True)
+                                             range=domain_limits)
         h[t] = H
 
     likelihood[loc] = h
@@ -92,8 +100,11 @@ if compute_mean:
     avg_likelihood = {}
     for loc in sources:
         mean, new_time = average_field(likelihood[loc], window=average_window)
-
+        mean_counts, trash = average_field(likelihood[loc],
+                                           window=average_window,
+                                           normalized=False)
         avg_likelihood[loc] = mean
+        counts[loc] = mean_counts
 
     likelihood = avg_likelihood
     parameter['time_array'] = new_time
@@ -128,3 +139,6 @@ np.save(f'../data/analysis/sa-S{series:02d}/posterior_sa-S{series:02d}{avg_label
 #         likelihood, allow_pickle=True)
 np.save(f'../data/analysis/sa-S{series:02d}/params_sa-S{series:02d}{avg_label}.npy',
         parameter, allow_pickle=True)
+
+np.save(f'../data/analysis/sa-S{series:02d}/counts_sa-S{series:02d}{avg_label}.npy',
+        counts, allow_pickle=True)
