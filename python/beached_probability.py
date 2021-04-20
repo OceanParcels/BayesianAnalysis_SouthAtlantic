@@ -83,9 +83,6 @@ sources = ['Rio-de-Janeiro',
 
 number_sources = len(sources)
 
-# Storing the parameters of the simulations that are used for later
-# processing of the data.
-
 
 print('Building histograms')
 for loc in sources:
@@ -143,7 +140,7 @@ parameter = {'domain_limits': domain_limits,
 
 ################
 if compute_mean:
-    print('Averaging histograms and computiong likelihood_america.')
+    print('Averaging histograms and computiong likelihood')
     avg_label = f'_average{average_window}'
     avg_likelihood_america = {}
     avg_likelihood_africa = {}
@@ -199,12 +196,11 @@ for k, loc in enumerate(sources):
 posterior = {'America': posterior_america,
              'Africa': posterior_africa}
 
-np.save(f'../data/analysis/posterior.npy',
+np.save(f'../data/analysis/sa-S{series:02d}/beached_posterior_sa-S{series:02d}{avg_label}.npy',
         posterior, allow_pickle=True)
 
-np.save(f'../data/analysis/counts.npy',
-        counts_africa, allow_pickle=True)
+# np.save(f'../data/analysis/counts.npy',
+#         counts_africa, allow_pickle=True)
 
-
-np.save(f'../data/analysis/params',
+np.save(f'../data/analysis/sa-S{series:02d}/beached_params_sa-S{series:02d}{avg_label}.npy',
         parameter, allow_pickle=True)

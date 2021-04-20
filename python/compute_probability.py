@@ -6,10 +6,8 @@ import pandas as pd
 Computes the probability field from a Ocean Parcels simulation.
 Merges 2d likelihood of different OP output files.
 1 output file per source.
+
 """
-series = 3
-compute_mean = True
-average_window = 30
 
 
 def average_field(array, window=30, normalized=True):
@@ -32,14 +30,23 @@ def average_field(array, window=30, normalized=True):
         else:
             averaged[t] = mean_aux
 
+        print('-- Normalized?', averaged[t].sum())
+
     return averaged, time_array*window
 
 
 # ###### Paramaters ########
 # parameters for binning
+series = 3
+
+compute_mean = False
+
+average_window = 1500
+
 avg_label = ''
 domain_limits = [[-73.0, 24.916666], [-79.916664, -5.0833335]]
 number_bins = (120, 90)  # original from cmems is (1176, 899)
+
 lon_range = np.linspace(domain_limits[0][0], domain_limits[0][1],
                         number_bins[0])
 lat_range = np.linspace(domain_limits[1][0], domain_limits[1][1],
@@ -47,9 +54,11 @@ lat_range = np.linspace(domain_limits[1][0], domain_limits[1][1],
 
 
 priors = pd.read_csv('../data/sources/river_inputs.csv', index_col=0)
+
 likelihood = {}
 posterior = {}
 counts = {}
+
 sources = ['Rio-de-Janeiro',
            'Rio-de-la-Plata',
            'Cape-Town',
@@ -71,46 +80,55 @@ parameter = {'domain_limits': domain_limits,
              'lat_range': lat_range,
              'sources': sources}
 
+print('Building histograms')
 for loc in sources:
-    print(loc)
+    print(f'- {loc}')
     path_2_file = f"../data/simulations/sa-S03/sa-S03_{loc}.nc"
     particles = xr.load_dataset(path_2_file)
     n = particles.dims['traj']
-    time = 1500  # particles.dims['obs']  # min_obs_lenght
+    time = 1500  # particles.dims['obs']
 
     h = np.zeros((time, *number_bins))
+    h_norm = np.zeros((time, *number_bins))
 
     for t in range(time):
         lons = particles['lon'][:, t].values
-        index = np.where(~np.isnan(lons))  # ugly statement
+        index = np.where(~np.isnan(lons))
         lons = lons[index]
         lats = particles['lat'][:, t].values
         index = np.where(~np.isnan(lats))
         lats = lats[index]
         number_particles = len(lats)
+
         H, x_edges, y_edges = np.histogram2d(lons, lats, bins=number_bins,
                                              range=domain_limits)
+
+        H_norm, x_edges, y_edges = np.histogram2d(lons, lats,
+                                                  bins=number_bins,
+                                                  range=domain_limits,
+                                                  density=True)
+        h_norm[t] = H_norm
         h[t] = H
 
-    likelihood[loc] = h
+    counts[loc] = h
+    likelihood[loc] = h_norm
 
 ################
 if compute_mean:
+    print('Averaging histograms and computiong likelihood')
     avg_label = f'_average{average_window}'
     avg_likelihood = {}
     for loc in sources:
-        mean, new_time = average_field(likelihood[loc], window=average_window)
-        mean_counts, trash = average_field(likelihood[loc],
-                                           window=average_window,
-                                           normalized=False)
+        mean, new_time = average_field(counts[loc], window=average_window)
+
         avg_likelihood[loc] = mean
-        counts[loc] = mean_counts
 
     likelihood = avg_likelihood
     parameter['time_array'] = new_time
     time = time//average_window
 
 # Normalizing constant (sum of all hypothesis)
+print('Computing Normailizing constant')
 normalizing_constant = np.zeros((time, *number_bins))
 
 print('number sources', number_sources)
@@ -124,6 +142,7 @@ for t in range(time):
     normalizing_constant[t] = np.sum(total, axis=0)
 
 # Posterior probability
+print('Computing posterior probability')
 for k, loc in enumerate(sources):
     aux = np.zeros((time, *number_bins))
 
@@ -135,10 +154,9 @@ for k, loc in enumerate(sources):
 # Saving the likelihood, posteior probabilityand parameters
 np.save(f'../data/analysis/sa-S{series:02d}/posterior_sa-S{series:02d}{avg_label}.npy',
         posterior, allow_pickle=True)
-# np.save('../data/analysis/likelihood_sa-S03.npy',
-#         likelihood, allow_pickle=True)
+
 np.save(f'../data/analysis/sa-S{series:02d}/params_sa-S{series:02d}{avg_label}.npy',
         parameter, allow_pickle=True)
 
-np.save(f'../data/analysis/sa-S{series:02d}/counts_sa-S{series:02d}{avg_label}.npy',
-        counts, allow_pickle=True)
+np.save(f'../data/analysis/sa-S{series:02d}/likelihood_sa-S{series:02d}{avg_label}.npy',
+        likelihood, allow_pickle=True)
