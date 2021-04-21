@@ -27,9 +27,11 @@ def average_field(array, window=30, normalized=True):
                 averaged[t] = np.zeros_like(mean_aux)
             else:
                 averaged[t] = mean_aux/mean_aux.sum()
+
         else:
             averaged[t] = mean_aux
 
+    if normalized:
         print('-- Normalized?', averaged[t].sum())
 
     return averaged, time_array*window
@@ -40,8 +42,9 @@ def average_field(array, window=30, normalized=True):
 series = 3
 
 compute_mean = False
+print(f'Compute mean == {compute_mean}!')
 
-average_window = 1500
+average_window = 30
 
 avg_label = ''
 domain_limits = [[-73.0, 24.916666], [-79.916664, -5.0833335]]
@@ -81,6 +84,8 @@ parameter = {'domain_limits': domain_limits,
              'sources': sources}
 
 print('Building histograms')
+
+total_counts = 0
 for loc in sources:
     print(f'- {loc}')
     path_2_file = f"../data/simulations/sa-S03/sa-S03_{loc}.nc"
@@ -111,6 +116,7 @@ for loc in sources:
         h[t] = H
 
     counts[loc] = h
+    total_counts += h
     likelihood[loc] = h_norm
 
 ################
@@ -118,12 +124,17 @@ if compute_mean:
     print('Averaging histograms and computiong likelihood')
     avg_label = f'_average{average_window}'
     avg_likelihood = {}
-    for loc in sources:
-        mean, new_time = average_field(counts[loc], window=average_window)
 
+    for loc in sources:
+        print(f'- {loc}')
+        mean, new_time = average_field(counts[loc], window=average_window)
         avg_likelihood[loc] = mean
 
+    mean_counts, trash = average_field(total_counts, window=average_window,
+                                       normalized=False)
+
     likelihood = avg_likelihood
+    total_counts = mean_counts
     parameter['time_array'] = new_time
     time = time//average_window
 
@@ -131,7 +142,6 @@ if compute_mean:
 print('Computing Normailizing constant')
 normalizing_constant = np.zeros((time, *number_bins))
 
-print('number sources', number_sources)
 for t in range(time):
     total = np.zeros((number_sources, *number_bins))
 
@@ -160,3 +170,6 @@ np.save(f'../data/analysis/sa-S{series:02d}/params_sa-S{series:02d}{avg_label}.n
 
 np.save(f'../data/analysis/sa-S{series:02d}/likelihood_sa-S{series:02d}{avg_label}.npy',
         likelihood, allow_pickle=True)
+
+np.save(f'../data/analysis/sa-S{series:02d}/counts_sa-S{series:02d}{avg_label}.npy',
+        total_counts, allow_pickle=True)
