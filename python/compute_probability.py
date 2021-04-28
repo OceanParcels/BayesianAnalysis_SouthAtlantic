@@ -44,7 +44,7 @@ series = 3
 compute_mean = False
 print(f'Compute mean == {compute_mean}!')
 
-average_window = 30
+average_window = 1500
 
 avg_label = ''
 domain_limits = [[-73.0, 24.916666], [-79.916664, -5.0833335]]

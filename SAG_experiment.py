@@ -4,6 +4,7 @@ from datetime import timedelta
 from datetime import datetime
 from parcels import GeographicPolar, Geographic
 import numpy as np
+import xarray as xr
 import sys
 import local_kernels as kernels
 
@@ -23,6 +24,9 @@ loc = sys.argv[1]
 # data = '../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
 data = 'data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
 output_path = f'data/sa-S{series:02d}.nc'
+
+# loading the fields that have to do with the coastline.
+coastal_fields = xr.load_dataset('../coastal_fields.nc')
 # data = '/data/oceanparcels/input_data/CMEMS/' + \
 #        'GLOBAL_ANALYSIS_FORECAST_PHY_001_024/*.nc'  # gemini
 # output_path = f'/scratch/cpierard/source_{loc}_release.nc'
@@ -37,15 +41,18 @@ variables = {'U': 'uo',
 dimensions = {'lat': 'latitude',
               'lon': 'longitude',
               'time': 'time'}
-indices = {'lat': range(1, 900), 'lon': range(1284, 2460)}
+
+indices = {'lat': range(*coastal_fields.index_lat),
+           'lon': range(*coastal_fields.index_lon)}
+
 fieldset = FieldSet.from_netcdf(filesnames, variables, dimensions,
                                 allow_time_extrapolation=True, indices=indices)
 
 ###############################################################################
 # Adding the border current, which applies for all scenarios except for 0     #
 ###############################################################################
-u_border = np.load('coastal_u.npy')
-v_border = np.load('coastal_v.npy')
+u_border = coastal_fields.coastal_u.values
+v_border = coastal_fields.coastal_u.values
 fieldset.add_field(Field('borU', data=u_border,
                          lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
                          mesh='spherical'))
@@ -58,7 +65,7 @@ fieldset.borV.units = Geographic()
 ###############################################################################
 # Adding in the  land cell identifiers                                        #
 ###############################################################################
-landID = np.load('landmask.npy')
+landID = coastal_fields.landmask.values
 fieldset.add_field(Field('landID', landID,
                          lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
                          mesh='spherical'))
@@ -83,7 +90,7 @@ fieldset.add_field(Field('Kh_meridional', data=K_h,
 ###############################################################################
 # Distance to the shore                                                       #
 ###############################################################################
-distance = np.load('distance2shore.npy')
+distance = coastal_fields.distance2shore.values
 fieldset.add_field(Field('distance2shore', distance,
                          lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
                          mesh='spherical'))

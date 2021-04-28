@@ -1,11 +1,12 @@
 from netCDF4 import Dataset
 import numpy as np
+import xarray as xr
 
 
-def make_landmask(fielddata, indices):
+def make_landmask(path2output, indices):
     """Returns landmask where land = 1 and ocean = 0.
 
-    - fielddata is the path to an output of a model (netcdf file expected).
+    - path2output is the path to an output of a model (netcdf file expected).
     - indices is a dictionary such as:
         indices = {'lat': slice(1, 900), 'lon': slice(1284, 2460)}.
 
@@ -15,7 +16,7 @@ def make_landmask(fielddata, indices):
     Warning: tested for the CMEMS model outputs where I asume that the variable
             uo exists.
     """
-    datafile = Dataset(fielddata)
+    datafile = Dataset(path2output)
     landmask = datafile.variables['uo'][0, 0, indices['lat'], indices['lon']]
     landmask = np.ma.masked_invalid(landmask)
     landmask = landmask.mask.astype('int')
@@ -118,17 +119,81 @@ def distance_to_shore(landmask, dx=1):
     return dist*dx
 
 
+def generate_dataset(path2output, indices, output_path):
+    """Creates a netCDF file with all the fields needed to run
+    SAG_experiment.py.
+
+    - path2output is the path to an output of a model (netcdf file expected).
+    - indices is a dictionary such as:
+        indices = {'lat': slice(1, 900), 'lon': slice(1284, 2460)}.
+
+    - output_path is the output path and name of the netCDF file.
+
+    Output: xarray dataset.
+    """
+    model = xr.load_dataset(path2output)
+    lons = model['longitude'][indices['lon']]  # * unpacks the tuple
+    lats = model['latitude'][indices['lat']]
+    X, Y = np.meshgrid(lons, lats)
+
+    landmask = make_landmask(path2output, indices)
+    coastal_cells = get_coastal_cells(landmask)
+    shore_cells = get_shore_cells(landmask)
+    coastal_u, coastal_v = create_border_current(landmask)
+    distance2shore = distance_to_shore(landmask, dx=9.26)  # km
+
+    ds = xr.Dataset(
+        data_vars=dict(
+            landmask=(["y", "x"], landmask),
+            coastal=(["y", "x"], coastal_cells),
+            shore=(["y", "x"], shore_cells),
+            coastal_u=(["y", "x"], coastal_u),
+            coastal_v=(["y", "x"], coastal_v),
+            distance2shore=(["y", "x"], distance2shore),
+            latitude=(["y", "x"], Y),
+            longitude=(["y", "x"], X),),
+
+        coords=dict(lon=(["x"], lons.values),
+                    lat=(["y"], lats.values),),
+
+        attrs=dict(description="setup files for SAG_experiment.py.",
+                   index_lat=(indices['lat'].start, indices['lat'].stop),
+                   index_lon=(indices['lon'].start, indices['lon'].stop)))
+
+    ds.to_netcdf(output_path)
+    return ds
+
+
 # Getting my data saved for simulations
-
+print('Generating setup_fields.nc')
 file_path = "../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc"
-indices = {'lat': range(1, 900), 'lon': range(1284, 2460)}
+indices = {'lat': range(1, 960), 'lon': range(1284, 2460)}
+outfile = '../coastal_fields.nc'
 
-land_mask = make_landmask(file_path, indices)
-coastal_cells = get_coastal_cells(land_mask)
-coastal_u, coastal_v = create_border_current(land_mask)
-distance2shore = distance_to_shore(land_mask, dx=9.26)  # km
-np.save('../landmask.npy', land_mask)
-np.save('../coastal_cells.npy', coastal_cells)
-np.save('../coastal_u.npy', coastal_u)
-np.save('../coastal_v.npy', coastal_v)
-np.save('../distance2shore.npy', distance2shore)
+generate_dataset(file_path, indices, outfile)
+
+# model = xr.load_dataset(file_path)
+# lons = model['longitude'][slice(*indices['lon'])]  # the * unpacks the tuple.
+# lats = model['latitude'][slice(*indices['lat'])]
+#
+# land_mask = make_landmask(file_path, indices)
+# coastal_cells = get_coastal_cells(land_mask)
+# shore_cells = get_shore_cells(land_mask)
+# coastal_u, coastal_v = create_border_current(land_mask)
+# distance2shore = distance_to_shore(land_mask, dx=9.26)  # km
+#
+# ds = xr.Dataset(
+#     data_vars=dict(
+#         landmask=(["y", "x"], land_mask),
+#         coastal=(["y", "x"], coastal_cells),
+#         shore=(["y", "x"], shore_cells),
+#         coastal_u=(["y", "x"], coastal_u),
+#         coastal_v=(["y", "x"], coastal_v),
+#         distance2shore=(["y", "x"], distance2shore)),
+#     coords=dict(lon=(["x"], lons.values),
+#                 lat=(["y"], lats.values),),
+#     attrs=dict(description="setup files for SAG_experiment.py.",
+#                index_lat=(indices['lat'].start, indices['lat'].stop),
+#                index_lon=(indices['lon'].start, indices['lon'].stop)))
+#
+# ds.to_netcdf('../setup_fields.nc')
