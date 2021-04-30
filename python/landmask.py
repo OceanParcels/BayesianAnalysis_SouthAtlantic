@@ -150,8 +150,8 @@ def generate_dataset(path2output, indices, output_path):
             coastal_u=(["y", "x"], coastal_u),
             coastal_v=(["y", "x"], coastal_v),
             distance2shore=(["y", "x"], distance2shore),
-            latitude=(["y", "x"], Y),
-            longitude=(["y", "x"], X),),
+            lat_mesh=(["y", "x"], Y),
+            lon_mesh=(["y", "x"], X),),
 
         coords=dict(lon=(["x"], lons.values),
                     lat=(["y"], lats.values),),
@@ -161,39 +161,13 @@ def generate_dataset(path2output, indices, output_path):
                    index_lon=(indices['lon'].start, indices['lon'].stop)))
 
     ds.to_netcdf(output_path)
-    return ds
 
 
 # Getting my data saved for simulations
 print('Generating setup_fields.nc')
+
 file_path = "../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc"
 indices = {'lat': range(1, 960), 'lon': range(1284, 2460)}
 outfile = '../coastal_fields.nc'
 
 generate_dataset(file_path, indices, outfile)
-
-# model = xr.load_dataset(file_path)
-# lons = model['longitude'][slice(*indices['lon'])]  # the * unpacks the tuple.
-# lats = model['latitude'][slice(*indices['lat'])]
-#
-# land_mask = make_landmask(file_path, indices)
-# coastal_cells = get_coastal_cells(land_mask)
-# shore_cells = get_shore_cells(land_mask)
-# coastal_u, coastal_v = create_border_current(land_mask)
-# distance2shore = distance_to_shore(land_mask, dx=9.26)  # km
-#
-# ds = xr.Dataset(
-#     data_vars=dict(
-#         landmask=(["y", "x"], land_mask),
-#         coastal=(["y", "x"], coastal_cells),
-#         shore=(["y", "x"], shore_cells),
-#         coastal_u=(["y", "x"], coastal_u),
-#         coastal_v=(["y", "x"], coastal_v),
-#         distance2shore=(["y", "x"], distance2shore)),
-#     coords=dict(lon=(["x"], lons.values),
-#                 lat=(["y"], lats.values),),
-#     attrs=dict(description="setup files for SAG_experiment.py.",
-#                index_lat=(indices['lat'].start, indices['lat'].stop),
-#                index_lon=(indices['lon'].start, indices['lon'].stop)))
-#
-# ds.to_netcdf('../setup_fields.nc')
