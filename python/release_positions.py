@@ -82,6 +82,7 @@ def region_filters(DF, lon_min, lon_max, lat_min, lat_max, shapefile=False):
     new_DF = DF[mask]
     return new_DF
 
+
 def nearest_coastal_cell(latidute, longitude, coord_lat, coord_lon):
     """
     Function to find the index of the closest point to a certain lon/lat value.
@@ -98,20 +99,22 @@ def nearest_coastal_cell(latidute, longitude, coord_lat, coord_lon):
 
     return index
 
+
 def convert_geopandas2pandas(geoDF):
     '''Replaces the geometry column with a X and Y columns
     There no built-in function for this in geopandas!
     '''
 
     L = len(geoDF)
-    coord = np.zeros((L,2))
+    coord = np.zeros((L, 2))
     coord[:, 0] = geoDF.geometry.x
     coord[:, 1] = geoDF.geometry.y
-    aux = pd.DataFrame(coord, columns=['X','Y'])
+    aux = pd.DataFrame(coord, columns=['X', 'Y'])
     geoDF.drop(columns=['geometry'], inplace=True)
     geoDF = pd.concat([geoDF, aux], axis=1)
 
     return geoDF
+
 
 def rivers2coastalgrid(DF, coastal_fields):
 
@@ -120,7 +123,7 @@ def rivers2coastalgrid(DF, coastal_fields):
     coast = coastal_fields.coastal.values
     lats = coastal_fields.lat.values
     lons = coastal_fields.lon.values
-    iy_coast, ix_coast = np.where(coast==1)
+    iy_coast, ix_coast = np.where(coast == 1)
     lat_coast = lats[iy_coast]
     lon_coast = lons[ix_coast]
 
@@ -131,9 +134,10 @@ def rivers2coastalgrid(DF, coastal_fields):
         x_lat = DF.iloc[i].Y
 
         n_index = nearest_coastal_cell(lat_coast, lon_coast, x_lat, x_lon)
-        new_coordinates[i,:] = (lon_coast[n_index], lat_coast[n_index])
+        new_coordinates[i, :] = (lon_coast[n_index], lat_coast[n_index])
 
-    aux = pd.DataFrame(new_coordinates, columns=['X_bin', 'Y_bin'], index=DF.index)
+    aux = pd.DataFrame(new_coordinates, columns=['X_bin', 'Y_bin'],
+                       index=DF.index)
     new_DF = pd.concat([DF, aux], axis=1)
 
     return new_DF
@@ -149,7 +153,7 @@ X = coastal_fields.lon_mesh
 Y = coastal_fields.lat_mesh
 
 # Isolating the coastal cell coordinates
-iy_coast, ix_coast = np.where(coast==1)
+iy_coast, ix_coast = np.where(coast == 1)
 lat_coast = lats[iy_coast]
 lon_coast = lons[ix_coast]
 
