@@ -203,7 +203,7 @@ def generate_dataset(path2output, indices, output_path):
 ###############################################################################
 # Getting my data saved for simulations
 ###############################################################################
-print('Generating setup_fields.nc')
+print('Generating coastal_fields.nc')
 
 file_path = "../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc"
 indices = {'lat': range(1, 960), 'lon': range(1284, 2460)}

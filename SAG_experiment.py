@@ -1,5 +1,5 @@
-from parcels import FieldSet, ParticleSet, JITParticle, AdvectionRK4
-from parcels import Variable, ErrorCode, Field, DiffusionUniformKh
+from parcels import FieldSet, ParticleSet, JITParticle
+from parcels import Variable, ErrorCode, Field
 from datetime import timedelta
 from datetime import datetime
 from parcels import GeographicPolar, Geographic
@@ -8,10 +8,9 @@ import xarray as xr
 import sys
 import local_kernels as kernels
 
-series = 4
+series = 5
 resusTime = 10
 shoreTime = 10
-n_points = 100  # particles per sampling site
 n_days = 10  # 22*30  # number of days to simulate
 K_bar = 10  # diffusion value
 stored_dt = 1  # hours
@@ -26,7 +25,8 @@ data = 'data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
 output_path = f'data/sa-S{series:02d}.nc'
 
 # loading the fields that have to do with the coastline.
-coastal_fields = xr.load_dataset('../coastal_fields.nc')
+coastal_fields = xr.load_dataset('coastal_fields.nc')
+
 # data = '/data/oceanparcels/input_data/CMEMS/' + \
 #        'GLOBAL_ANALYSIS_FORECAST_PHY_001_024/*.nc'  # gemini
 # output_path = f'/scratch/cpierard/source_{loc}_release.nc'
@@ -117,17 +117,19 @@ class SimpleBeachingResuspensionParticle(JITParticle):
 
 #####################################
 # Opening file with positions and sampling dates.
-river_sources = np.load('river_sources.npy', allow_pickle=True).item()
+# river_sources = np.load('river_sources.npy', allow_pickle=True).item()
+release_positions = np.load('release_positions.npy', allow_pickle=True).item()
+n_points = release_positions[loc].shape[0]
 
 np.random.seed(0)  # to repeat experiment in the same conditions
 # Create the cluster of particles around the sampling site
 # with a radius of 1/24 deg (?).
 # time = datetime.datetime.strptime('2018-01-01 12:00:00', '%Y-%m-%d %H:%M:%S')
 
-lon_cluster = [river_sources[loc][1]]*n_points
-lat_cluster = [river_sources[loc][0]]*n_points
-lon_cluster = np.array(lon_cluster)+(np.random.random(len(lon_cluster))-0.5)/24
-lat_cluster = np.array(lat_cluster)+(np.random.random(len(lat_cluster))-0.5)/24
+# lon_cluster = [river_sources[loc][1]]*n_points
+# lat_cluster = [river_sources[loc][0]]*n_points
+lon_cluster = release_positions[loc]['X_bin'].values
+lat_cluster = release_positions[loc]['Y_bin'].values
 beached = np.zeros_like(lon_cluster)
 age_par = np.zeros_like(lon_cluster)
 
