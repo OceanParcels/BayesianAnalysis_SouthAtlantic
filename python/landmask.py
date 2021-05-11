@@ -182,7 +182,7 @@ def generate_dataset(path2output, indices, output_path):
     ds = xr.Dataset(
         data_vars=dict(
             landmask=(["y", "x"], landmask),
-            coastal=(["y", "x"], coastal_cells),
+            coast=(["y", "x"], coastal_cells),
             shore=(["y", "x"], shore_cells),
             coastal_u=(["y", "x"], coastal_u),
             coastal_v=(["y", "x"], coastal_v),

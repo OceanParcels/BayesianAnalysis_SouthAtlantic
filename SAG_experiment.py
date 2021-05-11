@@ -22,7 +22,7 @@ loc = sys.argv[1]
 
 # data = '../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
 data = 'data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
-output_path = f'data/sa-S{series:02d}.nc'
+output_path = f'data/sa-S{series:02d}-{loc}.nc'
 
 # loading the fields that have to do with the coastline.
 coastal_fields = xr.load_dataset('coastal_fields.nc')
