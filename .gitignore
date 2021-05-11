@@ -1,10 +1,14 @@
 data/
+article_figs/
 .DS_Store
 notebooks/.ipynb_checkpoints/
 *.gif
 *.pkl
 *.npy
+*.nc
+*.mp4
 __pycache__/
 biblio/
 source_alocation_notes/
 presentation/
+notebooks/Verifying_beaching-Fixing_Itajai.ipynb

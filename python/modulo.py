@@ -1,6 +1,6 @@
 import numpy as np
 
-domain_coords = np.load("support_data.npy", allow_pickle=True)
+# domain_coords = np.load("support_data.npy", allow_pickle=True)
 
 
 def coarsen(array, x, y, factor):
@@ -28,6 +28,32 @@ def coarsen(array, x, y, factor):
     x = np.linspace(x[0], x[-1], q)
     y = np.linspace(y[0], y[-1], w)
     return array, x, y
+
+
+def coarsen_1D(array, x, factor):
+    """
+    Function to coarsen a 1D array by a especified factor.
+    If the array dimensions are not multiples of the
+    factor it adds the missing cells to make the length of the array divisible
+    by the factor.
+    array: 1D numpy array.
+    x: 1D array with the dimension of `array`
+    factor: positive integer.
+
+    Returns: 1D numpy coarse array, updated x dimensions.
+    """
+    fill = factor - array.shape[0] % factor
+    k = array.shape[0] + fill
+
+    array = np.append(array[:k], np.zeros(fill))
+
+    aux = array.reshape((array.shape[0]//factor, factor))
+    array = np.sum(aux, axis=1)
+
+    dx = np.diff(x)[0]
+    x = np.arange(x[0], x[-1] + dx*fill, dx*factor)
+
+    return array, x
 
 
 def haversine_distance_two(point_A, point_B):

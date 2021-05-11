@@ -1,18 +1,27 @@
 from netCDF4 import Dataset
 import numpy as np
+import xarray as xr
 
 
-def make_landmask(fielddata, indices):
+def make_landmask(path2output, indices):
     """Returns landmask where land = 1 and ocean = 0.
-    - fielddata is the path to an output of a model (netcdf file expected).
-    - indices is a dictionary such as:
-        indices = {'lat': slice(1, 900), 'lon': slice(1284, 2460)}.
-    Output: 2D array containing the landmask. Were the landcells are 1 and
-            the ocean cells are 0.
     Warning: tested for the CMEMS model outputs where I asume that the variable
-            uo exists.
+    uo exists.
+
+    Parameters
+    ----------
+    path2output: string
+        the path to an output of a model (netcdf file expected).
+    indices: dictionary
+        a dictionary such as {'lat': slice(1, 900), 'lon': slice(1284, 2460)}.
+
+    Returns
+    -------
+    landmask: array
+        2D array containing the landmask. Were the landcells are 1 and the
+        ocean cells are 0.
     """
-    datafile = Dataset(fielddata)
+    datafile = Dataset(path2output)
     landmask = datafile.variables['uo'][0, 0, indices['lat'], indices['lon']]
     landmask = np.ma.masked_invalid(landmask)
     landmask = landmask.mask.astype('int')
@@ -23,10 +32,18 @@ def make_landmask(fielddata, indices):
 def get_coastal_cells(landmask):
     """Function that detects the coastal cells, i.e. the ocean cells directly
     next to land. Computes the Laplacian of landmask.
-    - landmask: the land mask built using `make_landmask`, where land cell = 1
-                and ocean cell = 0.
-    Output: 2D array array containing the coastal cells, the coastal cells are
-            equal to one, and the rest is zero.
+
+    Parameters
+    ----------
+    landmask: array
+        the land mask built using `make_landmask` function , where landcell = 1
+                and oceancell = 0.
+
+    Returns
+    -------
+    coastal: array
+        2D array array containing the coastal cells, the coastal cells are
+        equal to one, and the rest is zero.
     """
     mask_lap = np.roll(landmask, -1, axis=0) + np.roll(landmask, 1, axis=0)
     mask_lap += np.roll(landmask, -1, axis=1) + np.roll(landmask, 1, axis=1)
@@ -40,10 +57,18 @@ def get_coastal_cells(landmask):
 def get_shore_cells(landmask):
     """Function that detects the shore cells, i.e. the land cells directly
     next to the ocean. Computes the Laplacian of landmask.
-    - landmask: the land mask built using `make_landmask`, where land cell = 1
-                and ocean cell = 0.
-    Output: 2D array array containing the shore cells, the shore cells are
-            equal to one, and the rest is zero.
+
+    Parameters
+    ----------
+    landmask: array
+        the land mask built using `make_landmask`, where land cell = 1
+        and ocean cell = 0.
+
+    Returns
+    -------
+    shore: array
+        2D array array containing the shore cells, the shore cells are
+        equal to one, and the rest is zero.
     """
     mask_lap = np.roll(landmask, -1, axis=0) + np.roll(landmask, 1, axis=0)
     mask_lap += np.roll(landmask, -1, axis=1) + np.roll(landmask, 1, axis=1)
@@ -56,10 +81,19 @@ def get_shore_cells(landmask):
 
 def create_border_current(landmask, double_cell=False):
     """Function that creates a border current 1 m/s away from the shore.
-    - landmask: the land mask built using `make_landmask`.
-    - double_cell: Boolean for determining if you want a double cell.
-      Default set to False.
-    Output: two 2D arrays, one for each camponent of the velocity.
+
+    Parameters
+    ----------
+    landmask: array
+        the land mask built using `make_landmask`.
+    double_cell: bool, optional
+        True for if you want a double cell border velocity. Default set to
+        False.
+
+    Returns
+    -------
+    v_x, v_y: array, array
+        two 2D arrays, one for each camponent of the velocity.
     """
     shore = get_shore_cells(landmask)
     coastal = get_coastal_cells(landmask)
@@ -88,10 +122,19 @@ def create_border_current(landmask, double_cell=False):
 def distance_to_shore(landmask, dx=1):
     """Function that computes the distance to the shore. It is based in the
     the `get_coastal_cells` algorithm.
-    - landmask: the land mask built using `make_landmask` function.
-    - dx: the grid cell dimesion. This is a crude approximation of the real
-    distance (be careful).
-    Output: 2D array containing the distances from shore.
+
+    Parameters
+    ----------
+    landmask: array
+        the land mask built using `make_landmask` function.
+    dx: float, optional
+        the grid cell dimesion. This is a crude approximation of the real
+        distance (be careful). Default set to 1.
+
+    Returns
+    -------
+    distance: array
+        2D array containing the distances from shore.
     """
     ci = get_coastal_cells(landmask)
     landmask_i = landmask + ci
@@ -104,21 +147,66 @@ def distance_to_shore(landmask, dx=1):
         dist += ci*(i+2)
         i += 1
 
-    return dist*dx
+    distance = dist*dx
+    return distance
 
+
+def generate_dataset(path2output, indices, output_path):
+    """Creates a netCDF file with all the fields needed to run
+    SAG_experiment.py.
+
+    Parameters
+    ----------
+    - path2output: string
+        is the path to an output of a model (netcdf file expected).
+    - indices: dictionary
+        a dictionary such as {'lat': slice(1, 900), 'lon': slice(1284, 2460)}.
+    output_path: string
+        is the output path and name of the netCDF file.
+
+    Returns
+    -------
+    None: it saves the file to output_path.
+    """
+    model = xr.load_dataset(path2output)
+    lons = model['longitude'][indices['lon']]  # * unpacks the tuple
+    lats = model['latitude'][indices['lat']]
+    X, Y = np.meshgrid(lons, lats)
+
+    landmask = make_landmask(path2output, indices)
+    coastal_cells = get_coastal_cells(landmask)
+    shore_cells = get_shore_cells(landmask)
+    coastal_u, coastal_v = create_border_current(landmask)
+    distance2shore = distance_to_shore(landmask, dx=9.26)  # km
+
+    ds = xr.Dataset(
+        data_vars=dict(
+            landmask=(["y", "x"], landmask),
+            coast=(["y", "x"], coastal_cells),
+            shore=(["y", "x"], shore_cells),
+            coastal_u=(["y", "x"], coastal_u),
+            coastal_v=(["y", "x"], coastal_v),
+            distance2shore=(["y", "x"], distance2shore),
+            lat_mesh=(["y", "x"], Y),
+            lon_mesh=(["y", "x"], X),),
+
+        coords=dict(lon=(["x"], lons.values),
+                    lat=(["y"], lats.values),),
+
+        attrs=dict(description="setup files for SAG_experiment.py.",
+                   index_lat=(indices['lat'].start, indices['lat'].stop),
+                   index_lon=(indices['lon'].start, indices['lon'].stop)))
+
+    ds.to_netcdf(output_path)
+
+
+###############################################################################
 # Getting my data saved for simulations
+###############################################################################
+print('Generating coastal_fields.nc')
 
+file_path = "../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc"
+indices = {'lat': range(1, 960), 'lon': range(1284, 2460)}
+outfile = '../coastal_fields.nc'
 
-file_path = '/data/oceanparcels/input_data/CMEMS/' + \
-    'GLOBAL_ANALYSIS_FORECAST_PHY_001_024_SMOC/SMOC_20170703_R20170704.nc'
-indices = {'lat': range(1, 900), 'lon': range(1284, 2460)}
-
-land_mask = make_landmask(file_path, indices)
-coastal_cells = get_coastal_cells(land_mask)
-coastal_u, coastal_v = create_border_current(land_mask)
-distance2shore = distance_to_shore(land_mask, dx=9.26)  # km
-np.save('../landmask.npy', land_mask)
-np.save('../coastal_cells.npy', coastal_cells)
-np.save('../coastal_u.npy', coastal_u)
-np.save('../coastal_v.npy', coastal_v)
-np.save('../distance2shore.npy', distance2shore)
+generate_dataset(file_path, indices, outfile)
