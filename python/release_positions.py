@@ -341,16 +341,16 @@ for i, loc in enumerate(cluster_locations):
     priors[loc] = [loc_percent, numer_rivers]
     cluster_percent += loc_df['dots_exten'].sum()/total_plastic
 
-    # compute the weights of each river within cluster
+    # compute the weights for each river within the cluster
     p = pd.DataFrame({'p': loc_df['dots_exten']/loc_df['dots_exten'].sum()})
 
     loc_df = loc_df.drop(['dots_exten'], axis=1)  # droppin this, dont need it
     loc_df = pd.concat([loc_df, p], axis=1)
     loc_df.reset_index(drop=True, inplace=True)
 
-    # Important step. Samples randomly the locations of the rivers N times
-    # accodring to the weigths 'p'. This creates the initital conditions for
-    # the experiment. Panda is amazing.
+    # IMPORTANT STEP. Samples randomly the locations of the rivers N times
+    # according to the weigths 'p'. This creates the initital conditions for
+    # the experiment.
     release_points[loc] = loc_df.sample(n=N, replace=True, weights='p')
 
 priors = pd.DataFrame(priors).T
@@ -359,3 +359,6 @@ priors = priors.rename(columns={0: 'Mean', 1: 'merged_rivers'})
 ###############################################################################
 # Save the stuff
 ###############################################################################
+
+np.save('../release_positions.npy', release_points, allow_pickle=True)
+priors.to_csv('../data/analysis/priors_river_inputs.csv')
