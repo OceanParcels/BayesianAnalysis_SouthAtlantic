@@ -6,14 +6,14 @@ from parcels import GeographicPolar, Geographic
 import numpy as np
 import sys
 import local_kernels as kernels
+import xarray as xr
 
+series = 5
 resusTime = 69
 shoreTime = 10
 start_time = datetime.strptime('2016-04-01 12:00:00',
                                '%Y-%m-%d %H:%M:%S')
 # end_time = '2020-08-31'
-# delta = 1613 days
-n_points = 100000  # particles per sampling site
 n_days = 1600  # number of days to simulate
 K_bar = 10  # diffusion value
 stored_dt = 24  # hours
@@ -22,8 +22,10 @@ loc = sys.argv[1]
 # data = '../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
 data = '/data/oceanparcels/input_data/CMEMS/' + \
     'GLOBAL_ANALYSIS_FORECAST_PHY_001_024_SMOC/*.nc'  # Gemini hourly
-output_path = f'/scratch/cpierard/br-cr_{loc}_D{n_days}_N{n_points}.nc'
+output_path = f'/scratch/cpierard/sa-s{series:02d}-{loc}.nc'
 
+# loading the fields that have to do with the coastline.
+coastal_fields = xr.load_dataset('coastal_fields.nc')
 # time range 2018-01-01 to 2019-11-27
 filesnames = {'U': data,
               'V': data}
@@ -68,7 +70,6 @@ fieldset.add_field(Field('landID', landID,
 # Adding the horizontal diffusion                                             #
 ###############################################################################
 size2D = (fieldset.U.grid.ydim, fieldset.U.grid.xdim)
-K_bar = 10
 K_h = K_bar * np.ones(size2D)
 nx, ny = np.where(landID == 1)
 K_h[nx, ny] = 0
@@ -115,20 +116,13 @@ release_positions = np.load('release_positions.npy', allow_pickle=True).item()
 n_points = release_positions[loc].shape[0]
 
 np.random.seed(0)  # to repeat experiment in the same conditions
-# Create the cluster of particles around the sampling site
-# with a radius of 1/24 deg (?).
 # time = datetime.datetime.strptime('2018-01-01 12:00:00', '%Y-%m-%d %H:%M:%S')
 
-
-# lon_cluster = [river_sources[loc][1]]*n_points
-# lat_cluster = [river_sources[loc][0]]*n_points
 lon_cluster = release_positions[loc]['X_bin'].values
 lat_cluster = release_positions[loc]['Y_bin'].values
 beached = np.zeros_like(lon_cluster)
 age_par = np.zeros_like(lon_cluster)
 
-start_time = datetime.strptime('2018-01-01 12:00:00',
-                               '%Y-%m-%d %H:%M:%S')
 # date_cluster = np.repeat(start_time, n_points)
 date_cluster = np.empty(n_points, dtype='O')
 for i in range(n_points):

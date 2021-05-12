@@ -148,7 +148,7 @@ def rivers2coastalgrid(DF, coastal_fields):
         a pandas Dataframe with the binned rivers into the coastal_cells.
     """
     N = len(DF)
-    coast = coastal_fields.coastal.values
+    coast = coastal_fields.coast.values
     lats = coastal_fields.lat.values
     lons = coastal_fields.lon.values
     iy_coast, ix_coast = np.where(coast == 1)
@@ -264,14 +264,14 @@ def rivers_per_location(DF, loc_coords, radius, binned=False, tolerance=0.1):
 r = 1  # radius for clusters.
 N = 100000  # Number of particles realesed per source.
 South_Atlantic_region = (-70, 25, -50, -5)  # the region to study
-save_priors = True  # True for saving the priors.
+save_priors = False  # True for saving the priors.
 ###############################################################################
 # Load all requiered data
 ###############################################################################
 
 # the coastal fields dataset.
 coastal_fields = xr.load_dataset('../coastal_fields.nc')
-coast = coastal_fields.coastal.values
+coast = coastal_fields.coast.values
 lats = coastal_fields.lat.values
 lons = coastal_fields.lon.values
 X = coastal_fields.lon_mesh
