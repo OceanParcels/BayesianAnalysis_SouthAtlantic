@@ -205,7 +205,8 @@ def generate_dataset(path2output, indices, output_path):
 ###############################################################################
 print('Generating coastal_fields.nc')
 
-file_path = "../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc"
+file_path = '/data/oceanparcels/input_data/CMEMS/' + \
+    'GLOBAL_ANALYSIS_FORECAST_PHY_001_024_SMOC/SMOC_20170703_R20170704.nc'
 indices = {'lat': range(1, 960), 'lon': range(1284, 2460)}
 outfile = '../coastal_fields.nc'
 

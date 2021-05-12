@@ -284,7 +284,7 @@ lon_coast = lons[ix_coast]
 
 
 # Read the GIS Shapefile from Meijer
-path = '../data/sources/Meijer2021_midpoint_emissions/'
+path = '../../river_inputs/Meijer2021_midpoint_emissions'
 river_discharge = convert_geopandas2pandas(gpd.read_file(path))
 river_discharge = region_filters(river_discharge, *South_Atlantic_region)
 river_discharge = rivers2coastalgrid(river_discharge, coastal_fields)
