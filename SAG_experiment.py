@@ -120,7 +120,7 @@ np.random.seed(0)  # to repeat experiment in the same conditions
 
 lon_cluster = release_positions[loc]['X_bin'].values
 lat_cluster = release_positions[loc]['Y_bin'].values
-beached = np.zeros_like(lon_cluster)
+beached = np.ones_like(lon_cluster)
 age_par = np.zeros_like(lon_cluster)
 
 # date_cluster = np.repeat(start_time, n_points)
