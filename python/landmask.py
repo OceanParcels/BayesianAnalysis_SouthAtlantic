@@ -176,7 +176,7 @@ def generate_dataset(path2output, indices, output_path):
     landmask = make_landmask(path2output, indices)
     coastal_cells = get_coastal_cells(landmask)
     shore_cells = get_shore_cells(landmask)
-    coastal_u, coastal_v = create_border_current(landmask, double_cell=True)
+    coastal_u, coastal_v = create_border_current(landmask, double_cell=False)
     distance2shore = distance_to_shore(landmask, dx=9.26)  # km
 
     ds = xr.Dataset(
