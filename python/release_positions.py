@@ -148,7 +148,7 @@ def rivers2coastalgrid(DF, coastal_fields):
         a pandas Dataframe with the binned rivers into the coastal_cells.
     """
     N = len(DF)
-    coast = coastal_fields.coastal.values
+    coast = coastal_fields.coast.values
     lats = coastal_fields.lat.values
     lons = coastal_fields.lon.values
     iy_coast, ix_coast = np.where(coast == 1)
@@ -271,7 +271,7 @@ save_priors = True  # True for saving the priors.
 
 # the coastal fields dataset.
 coastal_fields = xr.load_dataset('../coastal_fields.nc')
-coast = coastal_fields.coastal.values
+coast = coastal_fields.coast.values
 lats = coastal_fields.lat.values
 lons = coastal_fields.lon.values
 X = coastal_fields.lon_mesh
@@ -355,6 +355,7 @@ for i, loc in enumerate(cluster_locations):
 
 priors = pd.DataFrame(priors).T
 priors = priors.rename(columns={0: 'Mean', 1: 'merged_rivers'})
+priors['Mean'] = priors['Mean']/priors['Mean'].sum()  # nomarlizing
 
 ###############################################################################
 # Save the stuff

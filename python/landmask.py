@@ -104,8 +104,8 @@ def create_border_current(landmask, double_cell=False):
         v_x = -Lx*(coastal+shore)
         v_y = -Ly*(coastal+shore)
     else:
-        v_x = -Lx*(coastal)
-        v_y = -Ly*(coastal)
+        v_x = -Lx*(shore)
+        v_y = -Ly*(shore)
 
     magnitude = np.sqrt(v_y**2 + v_x**2)
     # the coastal cells between land create a problem. Magnitude there is zero

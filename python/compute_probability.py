@@ -39,15 +39,15 @@ def average_field(array, window=30, normalized=True):
 
 # ###### Paramaters ########
 # parameters for binning
-series = 3
+series = 5
 
-compute_mean = False
+compute_mean = True
 print(f'Compute mean == {compute_mean}!')
 
-average_window = 1500
+average_window = 1600
 
 avg_label = ''
-domain_limits = [[-73.0, 24.916666], [-79.916664, -5.0833335]]
+domain_limits = [[-73, 25], [-80, 0]]
 number_bins = (120, 90)  # original from cmems is (1176, 899)
 
 lon_range = np.linspace(domain_limits[0][0], domain_limits[0][1],
@@ -56,22 +56,22 @@ lat_range = np.linspace(domain_limits[1][0], domain_limits[1][1],
                         number_bins[1])
 
 
-priors = pd.read_csv('../data/sources/river_inputs.csv', index_col=0)
+priors = pd.read_csv('../data/analysis/priors_river_inputs.csv', index_col=0)
 
 likelihood = {}
 posterior = {}
 counts = {}
 
-sources = ['Rio-de-Janeiro',
+sources = ['Congo',
+           'Paraiba',
            'Rio-de-la-Plata',
-           'Cape-Town',
+           'Rio-de-Janeiro',
            'Porto-Alegre',
+           'Cape-Town',
+           'Recife',
+           'Salvador',
            'Santos',
-           'Cuvo',
-           # 'Chiloango-Congo',
-           'Luanda',
-           'Itajai',
-           'Paraiba']  # list(priors.keys())
+           'Itajai']  # list(priors.index)
 
 number_sources = len(sources)
 
@@ -88,7 +88,7 @@ print('Building histograms')
 total_counts = 0
 for loc in sources:
     print(f'- {loc}')
-    path_2_file = f"../data/simulations/sa-S03/sa-S03_{loc}.nc"
+    path_2_file = f"../data/simulations/sa-s{series:02d}/sa-s{series:02d}-{loc}.nc"
     particles = xr.load_dataset(path_2_file)
     n = particles.dims['traj']
     time = 1500  # particles.dims['obs']
