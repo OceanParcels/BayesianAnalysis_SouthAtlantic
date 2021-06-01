@@ -47,7 +47,7 @@ fieldset = FieldSet.from_netcdf(filesnames, variables, dimensions,
 # Adding the border current, which applies for all scenarios except for 0     #
 ###############################################################################
 u_border = coastal_fields.coastal_u.values
-v_border = coastal_fields.coastal_u.values
+v_border = coastal_fields.coastal_v.values
 fieldset.add_field(Field('borU', data=u_border,
                          lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
                          mesh='spherical'))
@@ -102,9 +102,7 @@ class SimpleBeachingResuspensionParticle(JITParticle):
                         initial=shoreTime, to_write=False)
     # Finally, I want to keep track of the age of the particle
     age = Variable('age', dtype=np.int32, initial=0)
-    # Weight of the particle in tons
-    # weights = Variable('weights', dtype=np.float32,
-    #                    initial=attrgetter('weights'))
+
     # Distance of the particle to the coast
     distance = Variable('distance', dtype=np.float32, initial=0)
 
@@ -149,7 +147,7 @@ def delete_particle(particle, fieldset, time):
 
 totalKernel = pset.Kernel(kernels.AdvectionRK4_floating) + \
     pset.Kernel(kernels.AntiBeachNudging) + \
-    pset.Kernel(kernels.BrownianMotion2D)  # + \
+    pset.Kernel(kernels.BrownianMotion2D)
 # pset.Kernel(kernels.beach)
 
 # Output file
