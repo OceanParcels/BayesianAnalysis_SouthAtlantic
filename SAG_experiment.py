@@ -8,7 +8,7 @@ import sys
 import local_kernels as kernels
 import xarray as xr
 
-series = 5
+series = 6
 resusTime = 69
 shoreTime = 10
 start_time = datetime.strptime('2016-04-01 12:00:00',
@@ -22,7 +22,7 @@ loc = sys.argv[1]
 # data = '../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
 data = '/data/oceanparcels/input_data/CMEMS/' + \
     'GLOBAL_ANALYSIS_FORECAST_PHY_001_024_SMOC/*.nc'  # Gemini hourly
-output_path = f'/scratch/cpierard/sa-s{series:02d}-{loc}-uo-nobeaching.nc'
+output_path = f'/scratch/cpierard/sa-s{series:02d}-{loc}.nc'
 
 # loading the fields that have to do with the coastline.
 coastal_fields = xr.load_dataset('coastal_fields.nc')
@@ -30,8 +30,8 @@ coastal_fields = xr.load_dataset('coastal_fields.nc')
 filesnames = {'U': data,
               'V': data}
 
-variables = {'U': 'uo',
-             'V': 'vo'}  # Use utotal
+variables = {'U': 'utotal',
+             'V': 'vtotal'}  # Use utotal
 
 dimensions = {'lat': 'latitude',
               'lon': 'longitude',
@@ -147,8 +147,8 @@ def delete_particle(particle, fieldset, time):
 
 totalKernel = pset.Kernel(kernels.AdvectionRK4_floating) + \
     pset.Kernel(kernels.AntiBeachNudging) + \
-    pset.Kernel(kernels.BrownianMotion2D)
-# pset.Kernel(kernels.beach)
+    pset.Kernel(kernels.BrownianMotion2D) + \
+    pset.Kernel(kernels.beach)
 
 # Output file
 output_file = pset.ParticleFile(
