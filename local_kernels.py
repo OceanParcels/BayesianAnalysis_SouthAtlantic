@@ -31,8 +31,7 @@ def AntiBeachNudging(particle, fieldset, time):
     the particles tended to get stuck if we used the velocity treshhold.
     """
 
-    if fieldset.distance2shore[time, particle.depth,
-                               particle.lat, particle.lon] < 0.5:
+    if particle.distance < 0.5:
         borUab = fieldset.borU[time, particle.depth, particle.lat,
                                particle.lon]
         borVab = fieldset.borV[time, particle.depth, particle.lat,

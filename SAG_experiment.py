@@ -8,7 +8,7 @@ import xarray as xr
 import sys
 import local_kernels as kernels
 
-series = 5
+series = 6
 resusTime = 10
 shoreTime = 10
 n_days = 10  # 22*30  # number of days to simulate
@@ -22,7 +22,7 @@ loc = sys.argv[1]
 
 # data = '../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
 data = 'data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
-output_path = f'data/sa-S{series:02d}-{loc}_local_test2.nc'
+output_path = f'data/local_debug.nc'
 
 # loading the fields that have to do with the coastline.
 coastal_fields = xr.load_dataset('coastal_fields.nc')
@@ -52,7 +52,7 @@ fieldset = FieldSet.from_netcdf(filesnames, variables, dimensions,
 # Adding the border current, which applies for all scenarios except for 0     #
 ###############################################################################
 u_border = coastal_fields.coastal_u.values
-v_border = coastal_fields.coastal_u.values
+v_border = coastal_fields.coastal_v.values
 fieldset.add_field(Field('borU', data=u_border,
                          lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
                          mesh='spherical'))
@@ -161,6 +161,9 @@ totalKernel = pset.Kernel(kernels.AdvectionRK4_floating) + \
     pset.Kernel(kernels.AntiBeachNudging) + \
     pset.Kernel(kernels.BrownianMotion2D) + \
     pset.Kernel(kernels.beach)
+
+
+# pset.Kernel(kernels.beach)
 
 # Output file
 output_file = pset.ParticleFile(
