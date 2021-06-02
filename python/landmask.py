@@ -79,16 +79,13 @@ def get_shore_cells(landmask):
     return shore
 
 
-def create_border_current(landmask, double_cell=False):
+def create_border_current(landmask):
     """Function that creates a border current 1 m/s away from the shore.
 
     Parameters
     ----------
     landmask: array
         the land mask built using `make_landmask`.
-    double_cell: bool, optional
-        True for if you want a double cell border velocity. Default set to
-        False.
 
     Returns
     -------
@@ -96,19 +93,14 @@ def create_border_current(landmask, double_cell=False):
         two 2D arrays, one for each camponent of the velocity.
     """
     shore = get_shore_cells(landmask)
-    coastal = get_coastal_cells(landmask)
     Ly = np.roll(landmask, -1, axis=0) - np.roll(landmask, 1, axis=0)
     Lx = np.roll(landmask, -1, axis=1) - np.roll(landmask, 1, axis=1)
 
-    if double_cell:
-        v_x = -Lx*(coastal+shore)
-        v_y = -Ly*(coastal+shore)
-    else:
-        v_x = -Lx*(shore)
-        v_y = -Ly*(shore)
+    v_x = -Lx*(shore)
+    v_y = -Ly*(shore)
 
     magnitude = np.sqrt(v_y**2 + v_x**2)
-    # the coastal cells between land create a problem. Magnitude there is zero
+    # the shore cells between land create a problem. Magnitude there is zero
     # I force it to be 1 to avoid problems when normalizing.
     ny, nx = np.where(magnitude == 0)
     magnitude[ny, nx] = 1

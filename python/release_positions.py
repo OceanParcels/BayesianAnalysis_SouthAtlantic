@@ -1,18 +1,18 @@
-import numpy as np
-import pandas as pd
-import xarray as xr
-import geopandas as gpd
 """
 This script creates the clusters, the priors and the release points or initial
-conditions for the experimente SAG_experiment.py.
+conditions for the particles in SAG_experiment.py.
 
 It uses the Meijer2021_midpoint_emissions GIS dataset.
 
-It looks kinda long because the docstrings. Go straight to line 264.
+It looks kinda long because of the docstrings. Go straight to line 264.
 
 **I would like to generalize the script to also do this with Lebretons2018
 dataset.
 """
+import numpy as np
+import pandas as pd
+import xarray as xr
+import geopandas as gpd
 
 
 def haversine_distance_two(point_A, point_B):
