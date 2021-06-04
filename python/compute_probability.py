@@ -1,21 +1,38 @@
-import numpy as np
-import xarray as xr
-import pandas as pd
-
 """
 Computes the probability field from a Ocean Parcels simulation.
 Merges 2d likelihood of different OP output files.
 1 output file per source.
-
 """
+import numpy as np
+import xarray as xr
+import pandas as pd
 
 
-def average_field(array, window=30, normalized=True):
+def time_averaging_field(array, window=30, normalized=True):
+    """Function averages a 3D field in a time window.
+
+    Parameters
+    ----------
+    array: array
+        3D array with dimensions (time, space, space). The time averaging
+        happens in axis=0 of the array.
+    window: int, optional
+        The time window for the averaging. Default value is 30 (days).
+    normalized: bool, optional
+        Normalizes the average in space, axis=1&2. Default True.
+
+    Returns
+    -------
+    averaged: array
+        time averaged fields dimensions (time//window, space, space).
+    time_array:
+        1D array showing the window jumps. Its useless...
+    """
     nt, nx, ny = array.shape
 
     new_t_dim = nt//window
     averaged = np.zeros((new_t_dim, nx, ny))
-    time_array = np.array(range(1, new_t_dim))
+    time_array = np.arange(window, nt, window)
 
     for t in range(0, new_t_dim):
         index_slice = slice((t)*window, (t+1)*window)
@@ -31,70 +48,57 @@ def average_field(array, window=30, normalized=True):
         else:
             averaged[t] = mean_aux
 
-    if normalized:
-        print('-- Normalized?', averaged[t].sum())
+    # if normalized:
+    #     print('--- Normalized?', averaged[-1].sum())
 
-    return averaged, time_array*window
+    return averaged, time_array
 
 
-# ###### Paramaters ########
-# parameters for binning
-series = 5
-
+###############################################################################
+# Setting the parameters
+###############################################################################
+series = 6
 compute_mean = True
+average_window = 1600  # days (or stored time steps from parcels simulations)
+
 print(f'Compute mean == {compute_mean}!')
 
-average_window = 1600
+domain_limits = [[-73, 25], [-80, -5]]
+number_bins = (98, 75)  # original from cmems is (1176, 899)
 
-avg_label = ''
-domain_limits = [[-73, 25], [-80, 0]]
-number_bins = (120, 90)  # original from cmems is (1176, 899)
-
+# generating the lon and lat ranges.
 lon_range = np.linspace(domain_limits[0][0], domain_limits[0][1],
                         number_bins[0])
 lat_range = np.linspace(domain_limits[1][0], domain_limits[1][1],
                         number_bins[1])
 
-
+# Loading priors. Computed with release_points.py script.
 priors = pd.read_csv('../data/analysis/priors_river_inputs.csv', index_col=0)
+sources = list(priors.index)
+number_sources = len(sources)
 
+# Empty dictionaries to store computed probabilities.
 likelihood = {}
 posterior = {}
 counts = {}
-
-sources = ['Congo',
-           'Paraiba',
-           'Rio-de-la-Plata',
-           'Rio-de-Janeiro',
-           'Porto-Alegre',
-           'Cape-Town',
-           'Recife',
-           'Salvador',
-           'Santos',
-           'Itajai']  # list(priors.index)
-
-number_sources = len(sources)
-
-# Storing the parameters of the simulations that are used for later
-# processing of the data.
-parameter = {'domain_limits': domain_limits,
-             'number_bins': number_bins,
-             'lon_range': lon_range,
-             'lat_range': lat_range,
-             'sources': sources}
-
+avg_label = ''  # label to be modified if average is True. Print in output_path
+###############################################################################
+# Building the histograms
+###############################################################################
 print('Building histograms')
 
-total_counts = 0
+time_dimensions = []
 for loc in sources:
     print(f'- {loc}')
-    path_2_file = f"../data/simulations/sa-s{series:02d}/sa-s{series:02d}-{loc}.nc"
+    path_2_file = f"../data/simulations/sa-s{series:02d}" + \
+        f"/sa-s{series:02d}-{loc}.nc"
     particles = xr.load_dataset(path_2_file)
     n = particles.dims['traj']
-    time = 1500  # particles.dims['obs']
+    time = particles.dims['obs']
+    time_dimensions.append(time)  # to compute the minimum time between locs
 
     h = np.zeros((time, *number_bins))
-    h_norm = np.zeros((time, *number_bins))
+    # h_norm = np.zeros((time, *number_bins))
 
     for t in range(time):
         lons = particles['lon'][:, t].values
@@ -105,44 +109,52 @@ for loc in sources:
         lats = lats[index]
         number_particles = len(lats)
 
-        H, x_edges, y_edges = np.histogram2d(lons, lats, bins=number_bins,
-                                             range=domain_limits)
+        if compute_mean:
+            # if true, the histograms are not normalized.
+            H, x_edges, y_edges = np.histogram2d(lons, lats, bins=number_bins,
+                                                 range=domain_limits)
+            h[t] = H
 
-        H_norm, x_edges, y_edges = np.histogram2d(lons, lats,
-                                                  bins=number_bins,
-                                                  range=domain_limits,
-                                                  density=True)
-        h_norm[t] = H_norm
-        h[t] = H
+        else:
+            # if false or else, the histograms are normalized, therefore
+            # we get directly the likelihood.
+            H_norm, x_edges, y_edges = np.histogram2d(lons, lats,
+                                                      bins=number_bins,
+                                                      range=domain_limits,
+                                                      density=True)
+            h[t] = H_norm
 
     counts[loc] = h
-    total_counts += h
-    likelihood[loc] = h_norm
 
-################
+time = min(time_dimensions)
+print('time', time)
+###############################################################################
+# To average or not to average, that's the question.
+###############################################################################
 if compute_mean:
+    # we average the unnormalized histograms in a time window.
     print('Averaging histograms and computiong likelihood')
-    avg_label = f'_average{average_window}'
-    avg_likelihood = {}
 
     for loc in sources:
-        print(f'- {loc}')
-        mean, new_time = average_field(counts[loc], window=average_window)
-        avg_likelihood[loc] = mean
+        mean, time_range = time_averaging_field(counts[loc],
+                                                window=average_window)
+        likelihood[loc] = mean
 
-    mean_counts, trash = average_field(total_counts, window=average_window,
-                                       normalized=False)
-
-    likelihood = avg_likelihood
-    total_counts = mean_counts
-    parameter['time_array'] = new_time
     time = time//average_window
+    avg_label = f'_aw{average_window}'  # average window nummer
+else:
+    # convert counts to likelihood. The counts were normalized in line ~120.
+    likelihood = counts
+    time_range = np.arange(0, time, 1)
 
+###############################################################################
 # Normalizing constant (sum of all hypothesis)
-print('Computing Normailizing constant')
+###############################################################################
+print('Computing Normalizing constant')
 normalizing_constant = np.zeros((time, *number_bins))
 
 for t in range(time):
+    # print('norm time', t)
     total = np.zeros((number_sources, *number_bins))
 
     for j, loc in enumerate(sources):
@@ -151,25 +163,50 @@ for t in range(time):
 
     normalizing_constant[t] = np.sum(total, axis=0)
 
+###############################################################################
 # Posterior probability
+###############################################################################
 print('Computing posterior probability')
+likelihood_xr = {}  # formatting dictionary for xarray Dataset convertion
 for k, loc in enumerate(sources):
-    aux = np.zeros((time, *number_bins))
+    pst = np.zeros((time, *number_bins))
+    lklhd = np.zeros((time, *number_bins))
 
     for t in range(time):
-        aux[t] = likelihood[loc][t]*priors['Mean'][loc]/normalizing_constant[t]
+        # Bayes theorem!
+        pst[t] = likelihood[loc][t]*priors['Mean'][loc]/normalizing_constant[t]
+        lklhd[t] = likelihood[loc][t]
+    # xarray Dataset formatting
+    posterior[loc] = (["time", "x", "y"], pst)
+    likelihood_xr[loc] = (["time", "x", "y"], lklhd)  # homgenizing time dim
 
-    posterior[loc] = aux
+###############################################################################
+# Saving the likelihood & posteior as netCDFs
+###############################################################################
+coordinates = dict(time=time_range,
+                   lon=(["x"], lon_range),
+                   lat=(["y"], lat_range))
 
-# Saving the likelihood, posteior probabilityand parameters
-np.save(f'../data/analysis/sa-S{series:02d}/posterior_sa-S{series:02d}{avg_label}.npy',
-        posterior, allow_pickle=True)
+attributes = {'description': f"Posterior probability for sa-s{series:02d}",
+              'average_window': average_window}
 
-np.save(f'../data/analysis/sa-S{series:02d}/params_sa-S{series:02d}{avg_label}.npy',
-        parameter, allow_pickle=True)
+# Posterior dataset
+ds_post = xr.Dataset(data_vars=posterior,
+                     coords=coordinates,
+                     attrs=attributes)
 
-np.save(f'../data/analysis/sa-S{series:02d}/likelihood_sa-S{series:02d}{avg_label}.npy',
-        likelihood, allow_pickle=True)
+attributes = {'description': f"Likelihood for sa-s{series:02d}",
+              'average_window': average_window}
 
-np.save(f'../data/analysis/sa-S{series:02d}/counts_sa-S{series:02d}{avg_label}.npy',
-        total_counts, allow_pickle=True)
+# likelihood dataset
+ds_like = xr.Dataset(data_vars=likelihood_xr,
+                     coords=coordinates,
+                     attrs=attributes)
+
+output_path_post = f'../data/analysis/sa-S{series:02d}' + \
+    f'/posterior_sa-S{series:02d}{avg_label}.nc'
+output_path_like = f'../data/analysis/sa-S{series:02d}' + \
+    f'/likelihood_sa-S{series:02d}{avg_label}.nc'
+
+ds_post.to_netcdf(output_path_post)
+ds_like.to_netcdf(output_path_like)

@@ -1,25 +1,39 @@
-import numpy as np
-import xarray as xr
-import pandas as pd
-import landmask as land
-import modulo as mod
-
 """
 Computes the probability field from a Ocean Parcels simulation.
 Merges 2d likelihood_america of different OP output files.
 1 output file per source.
 """
+import numpy as np
+import xarray as xr
+import pandas as pd
 
 
-def average_field_coast(array, window=30):
+def time_averaging_coast(array, window=30):
     """It averages the counts_america and computes a probability map that adds
     up to 100%.
+
+    Parameters
+    ----------
+    array: array
+        3D array with dimensions (time, space, space). The time averaging
+        happens in axis=0 of the array.
+    window: int, optional
+        The time window for the averaging. Default value is 30 (days).
+    normalized: bool, optional
+        Normalizes the average in space, axis=1&2. Default True.
+
+    Returns
+    -------
+    averaged: array
+        time averaged fields dimensions (time//window, space, space).
+    time_array:
+        1D array showing the window jumps. Its useless...
     """
     nt, ny = array.shape
 
     new_t_dim = nt//window
     averaged = np.zeros((new_t_dim, ny))
-    time_array = np.array(range(1, new_t_dim))
+    time_array = np.arange(window, nt, window)
 
     for t in range(0, new_t_dim):
         index_slice = slice((t)*window, (t+1)*window)
@@ -32,19 +46,44 @@ def average_field_coast(array, window=30):
 
         print('-- Normalized?', averaged[t].sum())
 
-    return averaged, time_array*window
+    return averaged, time_array
 
 
-# ###### Paramaters ########
-# parameters for binning
-series = 3
+def coarsen_1D(array, x, factor):
+    """
+    Function to coarsen a 1D array by a especified factor.
+    If the array dimensions are not multiples of the
+    factor it adds the missing cells to make the length of the array divisible
+    by the factor.
+    array: 1D numpy array.
+    x: 1D array with the dimension of `array`
+    factor: positive integer.
 
+    Returns: 1D numpy coarse array, updated x dimensions.
+    """
+    fill = factor - array.shape[0] % factor
+    k = array.shape[0] + fill
+
+    array = np.append(array[:k], np.zeros(fill))
+
+    aux = array.reshape((array.shape[0]//factor, factor))
+    array = np.sum(aux, axis=1)
+
+    dx = np.diff(x)[0]
+    x = np.arange(x[0], x[-1] + dx*fill, dx*factor)
+
+    return array, x
+
+
+###############################################################################
+# Setting the parameters
+###############################################################################
+series = 6
 compute_mean = True
-
 coarsen = True
-factor = 10
+average_window = 1600
+factor = 12
 
-average_window = 1500
 
 landmask = np.load('../landmask.npy')
 shore = land.get_shore_cells(landmask)
@@ -52,7 +91,7 @@ coast = land.get_coastal_cells(landmask)
 lat_dim, lon_dim = landmask.shape
 
 avg_label = ''
-domain_limits = [[-73.0, 24.916666], [-79.916664, -5.0833335]]
+domain_limits = [[-73, 25], [-80, -5]]
 
 lat_range = np.linspace(domain_limits[1][0], domain_limits[1][1],
                         lat_dim)
@@ -70,16 +109,17 @@ likelihood_america = {}
 posterior_america = {}
 likelihood_africa = {}
 posterior_africa = {}
-sources = ['Rio-de-Janeiro',
-           'Rio-de-la-Plata',
-           'Cape-Town',
-           'Porto-Alegre',
-           'Santos',
-           'Cuvo',
-           # 'Chiloango-Congo',
-           'Luanda',
-           'Itajai',
-           'Paraiba']  # list(priors.keys())
+
+sources = ['Congo',
+           # 'Paraiba',
+           # 'Rio-de-la-Plata',
+           # 'Rio-de-Janeiro',
+           # 'Porto-Alegre',
+           # 'Cape-Town',
+           # 'Recife',
+           # 'Salvador',
+           # 'Santos',
+           'Itajai']  # list(priors.index)
 
 number_sources = len(sources)
 
@@ -115,10 +155,10 @@ for loc in sources:
         count_afr = np.sum(H[900:1120, :], axis=0)
 
         if coarsen:
-            h_ame[t], new_latitudes_ame = mod.coarsen_1D(count_ame, lat_range,
-                                                         factor)
-            h_afr[t], new_latitudes_afr = mod.coarsen_1D(count_afr, lat_range,
-                                                         factor)
+            h_ame[t], new_latitudes_ame = coarsen_1D(count_ame, lat_range,
+                                                     factor)
+            h_afr[t], new_latitudes_afr = coarsen_1D(count_afr, lat_range,
+                                                     factor)
         else:
             h_ame[t] = count_ame
             h_afr[t] = count_afr
@@ -146,10 +186,10 @@ if compute_mean:
     avg_likelihood_africa = {}
     for loc in sources:
         print(f'- {loc}')
-        mean_ame, new_time_ame = average_field_coast(counts_america[loc],
-                                                     window=average_window)
-        mean_afr, new_time_afr = average_field_coast(counts_africa[loc],
-                                                     window=average_window)
+        mean_ame, new_time_ame = time_averaging_coast(counts_america[loc],
+                                                      window=average_window)
+        mean_afr, new_time_afr = time_averaging_coast(counts_africa[loc],
+                                                      window=average_window)
 
         avg_likelihood_america[loc] = mean_ame
         avg_likelihood_africa[loc] = mean_afr
