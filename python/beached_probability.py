@@ -1,7 +1,7 @@
 """
-Computes the probability field from a Ocean Parcels simulation.
-Merges 2d likelihood_america of different OP output files.
-1 output file per source.
+Computes the probability field of beached particles from a Ocean Parcels
+simulations. Computes the posterior probability in tha latitude of the beached
+particles.
 """
 import numpy as np
 import xarray as xr
@@ -10,12 +10,12 @@ import pandas as pd
 
 def time_averaging_coast(array, window=30):
     """It averages the counts_america and computes a probability map that adds
-    up to 100%.
+    up to 100%. It is built for the BEached particles 2D array.
 
     Parameters
     ----------
     array: array
-        3D array with dimensions (time, space, space). The time averaging
+        2D array with dimensions (time, space). The time averaging
         happens in axis=0 of the array.
     window: int, optional
         The time window for the averaging. Default value is 30 (days).
@@ -25,7 +25,7 @@ def time_averaging_coast(array, window=30):
     Returns
     -------
     averaged: array
-        time averaged fields dimensions (time//window, space, space).
+        time averaged fields dimensions (time//window, space).
     time_array:
         1D array showing the window jumps. Its useless...
     """
@@ -49,165 +49,112 @@ def time_averaging_coast(array, window=30):
     return averaged, time_array
 
 
-def coarsen_1D(array, x, factor):
-    """
-    Function to coarsen a 1D array by a especified factor.
-    If the array dimensions are not multiples of the
-    factor it adds the missing cells to make the length of the array divisible
-    by the factor.
-    array: 1D numpy array.
-    x: 1D array with the dimension of `array`
-    factor: positive integer.
-
-    Returns: 1D numpy coarse array, updated x dimensions.
-    """
-    fill = factor - array.shape[0] % factor
-    k = array.shape[0] + fill
-
-    array = np.append(array[:k], np.zeros(fill))
-
-    aux = array.reshape((array.shape[0]//factor, factor))
-    array = np.sum(aux, axis=1)
-
-    dx = np.diff(x)[0]
-    x = np.arange(x[0], x[-1] + dx*fill, dx*factor)
-
-    return array, x
-
-
 ###############################################################################
 # Setting the parameters
 ###############################################################################
-series = 6
-compute_mean = True
-coarsen = True
-average_window = 1600
-factor = 12
+series = 6  # the number of the simulation series
+compute_mean = True  # True if you want to compute the average probability
+average_window = 1600  # window size for computing the probability
 
+print(f'Compute mean == {compute_mean}!')
 
-landmask = np.load('../landmask.npy')
-shore = land.get_shore_cells(landmask)
-coast = land.get_coastal_cells(landmask)
-lat_dim, lon_dim = landmask.shape
-
-avg_label = ''
 domain_limits = [[-73, 25], [-80, -5]]
+number_bins = (98, 75)  # defined with respect to domain_limits to be 1x1 cell
+half_point = number_bins[0]//2
 
 lat_range = np.linspace(domain_limits[1][0], domain_limits[1][1],
-                        lat_dim)
+                        number_bins[1])
 
-if coarsen:
-    number_bins = (lat_dim + (factor - lat_dim % factor))//factor
-else:
-    number_bins = lat_dim
+# Loading priors. Computed with release_points.py script.
+priors = pd.read_csv('../data/analysis/priors_river_inputs.csv', index_col=0)
+sources = list(priors.index)
+number_sources = len(sources)
 
-priors = pd.read_csv('../data/sources/river_inputs.csv', index_col=0)
-# total_particles_beached = {}
+# Empty dictionaries to store computed probabilities.
 counts_america = {}
 counts_africa = {}
 likelihood_america = {}
 posterior_america = {}
 likelihood_africa = {}
 posterior_africa = {}
-
-sources = ['Congo',
-           # 'Paraiba',
-           # 'Rio-de-la-Plata',
-           # 'Rio-de-Janeiro',
-           # 'Porto-Alegre',
-           # 'Cape-Town',
-           # 'Recife',
-           # 'Salvador',
-           # 'Santos',
-           'Itajai']  # list(priors.index)
-
-number_sources = len(sources)
-
-
+avg_label = ''
+###############################################################################
+# Building the histograms
+###############################################################################
 print('Building histograms')
+
+time_dimensions = []
 for loc in sources:
     print(f'- {loc}')
-    path_2_file = f"../data/simulations/sa-S03/sa-S03_{loc}.nc"
+    path_2_file = f"../data/simulations/sa-s{series:02d}" + \
+        f"/sa-s{series:02d}-{loc}.nc"
     particles = xr.load_dataset(path_2_file)
     n = particles.dims['traj']
     time = particles.dims['obs']
+    time_dimensions.append(time)
 
-    h_ame = np.zeros((time, number_bins))
-    h_afr = np.zeros((time, number_bins))
+    particles = particles.where((particles.beach == 1))
+
+    h_ame = np.zeros((time, number_bins[1]))
+    h_afr = np.zeros((time, number_bins[1]))
     # beached_loc = np.zeros(time)
 
     for t in range(time):
         lons = particles['lon'][:, t].values
+        lats = particles['lat'][:, t].values
         index = np.where(~np.isnan(lons))
         lons = lons[index]
-        lats = particles['lat'][:, t].values
-        index = np.where(~np.isnan(lats))
         lats = lats[index]
 
-        H, x_edges, y_edges = np.histogram2d(lons, lats, bins=(1176, 899),
+        H, x_edges, y_edges = np.histogram2d(lons, lats, bins=number_bins,
                                              range=domain_limits)
 
         H = np.nan_to_num(H)
-        H = H*(coast.T + shore.T)
-        # number_particles = H[0:500, :].sum()
+        count_ame = np.sum(H[:half_point, :], axis=0)
+        count_afr = np.sum(H[half_point:, :], axis=0)
 
-        count_ame = np.sum(H[0:500, :], axis=0)
-        count_afr = np.sum(H[900:1120, :], axis=0)
-
-        if coarsen:
-            h_ame[t], new_latitudes_ame = coarsen_1D(count_ame, lat_range,
-                                                     factor)
-            h_afr[t], new_latitudes_afr = coarsen_1D(count_afr, lat_range,
-                                                     factor)
-        else:
-            h_ame[t] = count_ame
-            h_afr[t] = count_afr
-
-            new_latitudes = lat_range
-
-        # beached_loc[t] = number_particles
+        h_ame[t] = count_ame
+        h_afr[t] = count_afr
 
     counts_america[loc] = h_ame
     counts_africa[loc] = h_afr
-    # total_particles_beached[loc] = beached_loc
 
-# creating parametes dictionary
-parameter = {'domain_limits': domain_limits,
-             'number_bins': number_bins,
-             'lat_range_america': new_latitudes_ame,
-             'lat_range_africa': new_latitudes_afr,
-             'sources': sources}
+time = min(time_dimensions)
 
-################
+###############################################################################
+# To average or not to average, that's the question.
+###############################################################################
 if compute_mean:
     print('Averaging histograms and computiong likelihood')
-    avg_label = f'_average{average_window}'
-    avg_likelihood_america = {}
-    avg_likelihood_africa = {}
+
     for loc in sources:
         print(f'- {loc}')
-        mean_ame, new_time_ame = time_averaging_coast(counts_america[loc],
-                                                      window=average_window)
-        mean_afr, new_time_afr = time_averaging_coast(counts_africa[loc],
-                                                      window=average_window)
+        mean_ame, time_range = time_averaging_coast(counts_america[loc],
+                                                    window=average_window)
+        mean_afr, _ = time_averaging_coast(counts_africa[loc],
+                                           window=average_window)
 
-        avg_likelihood_america[loc] = mean_ame
-        avg_likelihood_africa[loc] = mean_afr
+        likelihood_america[loc] = mean_ame
+        likelihood_africa[loc] = mean_afr
 
-    likelihood_america = avg_likelihood_america
-    likelihood_africa = avg_likelihood_africa
-    print('time same size', new_time_ame.shape == new_time_afr.shape)
-    parameter['time_array'] = new_time_ame
-    # parameter['time_array_africa'] = new_time_afr
     time = time//average_window
+    avg_label = f'_average{average_window}'
 
+else:
+    # convert counts to likelihood. The counts were normalized in line ~120.
+    likelihood_america = counts_america
+    likelihood_africa = counts_africa
+    time_range = np.arange(0, time, 1)
+
+###############################################################################
 # Normalizing constant (sum of all hypothesis)
+###############################################################################
 print('Computing Normailizing constant')
-normalizing_constant = np.zeros((time, 2, number_bins))
+normalizing_constant = np.zeros((time, 2, number_bins[1]))
 # normalizing_constant_afr = np.zeros((time, 2, number_bins))
 
 for t in range(time):
-    total = np.zeros((number_sources, 2, number_bins))
+    total = np.zeros((number_sources, 2, number_bins[1]))
 
     for j, loc in enumerate(sources):
 
@@ -217,30 +164,48 @@ for t in range(time):
     normalizing_constant[t, 0] = np.sum(total[:, 0, :], axis=0)
     normalizing_constant[t, 1] = np.sum(total[:, 1, :], axis=0)
 
-# posterior_america probability
+###############################################################################
+# Posterior probability
+###############################################################################
 print('Computing posterior probability')
 for k, loc in enumerate(sources):
-    aux_ame = np.zeros((time, number_bins))
-    aux_afr = np.zeros((time, number_bins))
+    aux_ame = np.zeros((time, number_bins[1]))
+    aux_afr = np.zeros((time, number_bins[1]))
 
     for t in range(time):
-        aux_ame[t] = likelihood_america[loc][t]*priors['Mean'][loc]/normalizing_constant[t, 0]
-        aux_afr[t] = likelihood_africa[loc][t]*priors['Mean'][loc]/normalizing_constant[t, 1]
-    posterior_america[loc] = aux_ame
-    posterior_africa[loc] = aux_afr
+        aux_ame[t] = likelihood_america[loc][t]*priors['Mean'][loc] / \
+            normalizing_constant[t, 0]
+        aux_afr[t] = likelihood_africa[loc][t]*priors['Mean'][loc] / \
+            normalizing_constant[t, 1]
+    posterior_america[loc] = (["time", "y"], aux_ame)
+    posterior_africa[loc] = (["time",  "y"], aux_afr)
 
-# Saving the likelihood_america, posteior probabilityand parameters
-# np.save(f'../data/analysis/sa-S{series:02d}/beach_posterior_america_sa-S{series:02d}{avg_label}.npy',
-    # posterior_america, allow_pickle = True)
+###############################################################################
+# Saving the likelihood & posteior as netCDFs
+###############################################################################
+coordinates = dict(time=time_range,
+                   lat=(["y"], lat_range))
 
-posterior = {'America': posterior_america,
-             'Africa': posterior_africa}
+attributes = {'description': f"Beached posterior probability for America \
+              series sa-s{series:02d}.",
+              'average_window': average_window}
+# Posterior dataset
+post_ame = xr.Dataset(data_vars=posterior_america,
+                      coords=coordinates,
+                      attrs=attributes)
 
-np.save(f'../data/analysis/sa-S{series:02d}/beached_posterior_sa-S{series:02d}{avg_label}.npy',
-        posterior, allow_pickle=True)
+attributes = {'description': f"Beached posterior probability for Africa \
+              series sa-s{series:02d}.",
+              'average_window': average_window}
+# Posterior dataset
+post_afr = xr.Dataset(data_vars=posterior_africa,
+                      coords=coordinates,
+                      attrs=attributes)
 
-# np.save(f'../data/analysis/counts.npy',
-#         counts_africa, allow_pickle=True)
+output_path_ame = f'../data/analysis/sa-S{series:02d}' + \
+    f'/beach_posterior_America_sa-S{series:02d}{avg_label}.nc'
+output_path_afr = f'../data/analysis/sa-S{series:02d}' + \
+    f'/beach_posterior_Africa_sa-S{series:02d}{avg_label}.nc'
 
-np.save(f'../data/analysis/sa-S{series:02d}/beached_params_sa-S{series:02d}{avg_label}.npy',
-        parameter, allow_pickle=True)
+post_ame.to_netcdf(output_path_ame)
+post_afr.to_netcdf(output_path_afr)

@@ -1,7 +1,7 @@
 """
 Computes the probability field from a Ocean Parcels simulation.
-Merges 2d likelihood of different OP output files.
-1 output file per source.
+Merges 2d likelihood of different OP output files and from there it computes
+the posterior probability using the priors.
 """
 import numpy as np
 import xarray as xr
@@ -57,14 +57,14 @@ def time_averaging_field(array, window=30, normalized=True):
 ###############################################################################
 # Setting the parameters
 ###############################################################################
-series = 6
-compute_mean = True
+series = 6  # the number of the simulation series
+compute_mean = True  # True if you want to compute the average probability
 average_window = 1600  # days (or stored time steps from parcels simulations)
 
 print(f'Compute mean == {compute_mean}!')
 
 domain_limits = [[-73, 25], [-80, -5]]
-number_bins = (98, 75)  # original from cmems is (1176, 899)
+number_bins = (98, 75)  # defined with respect to domain_limits to be 1x1 deg
 
 # generating the lon and lat ranges.
 lon_range = np.linspace(domain_limits[0][0], domain_limits[0][1],
@@ -127,7 +127,7 @@ for loc in sources:
     counts[loc] = h
 
 time = min(time_dimensions)
-print('time', time)
+
 ###############################################################################
 # To average or not to average, that's the question.
 ###############################################################################
@@ -187,7 +187,7 @@ coordinates = dict(time=time_range,
                    lon=(["x"], lon_range),
                    lat=(["y"], lat_range))
 
-attributes = {'description': f"Posterior probability for sa-s{series:02d}",
+attributes = {'description': f"Posterior probability for sa-s{series:02d}.",
               'average_window': average_window}
 
 # Posterior dataset
