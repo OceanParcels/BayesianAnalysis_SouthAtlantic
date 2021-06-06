@@ -1,7 +1,3 @@
-import numpy as np
-import pandas as pd
-import xarray as xr
-import geopandas as gpd
 """
 This script creates the clusters, the priors and the release points or initial
 conditions for the experimente SAG_experiment.py.
@@ -13,6 +9,10 @@ It looks kinda long because the docstrings. Go straight to line 264.
 **I would like to generalize the script to also do this with Lebretons2018
 dataset.
 """
+import numpy as np
+import pandas as pd
+import xarray as xr
+import geopandas as gpd
 
 
 def haversine_distance_two(point_A, point_B):
@@ -265,6 +265,7 @@ r = 1  # radius for clusters.
 N = 100000  # Number of particles realesed per source.
 South_Atlantic_region = (-70, 25, -50, -5)  # the region to study
 save_priors = True  # True for saving the priors.
+
 ###############################################################################
 # Load all requiered data
 ###############################################################################
@@ -315,7 +316,6 @@ for loc in cluster_locations:
     indx = nearest_coastal_cell(lat_coast, lon_coast, *cluster_locations[loc])
     grid_cluster_centers[loc] = (lat_coast[indx], lon_coast[indx])
 
-
 ###############################################################################
 # Generate the Clusters, release points and priors
 ###############################################################################
@@ -360,7 +360,6 @@ priors['Mean'] = priors['Mean']/priors['Mean'].sum()  # nomarlizing
 ###############################################################################
 # Save the stuff
 ###############################################################################
-
 np.save('../river_sources.npy', cluster_locations, allow_pickle=True)
 np.save('../release_positions.npy', release_points, allow_pickle=True)
 if save_priors:

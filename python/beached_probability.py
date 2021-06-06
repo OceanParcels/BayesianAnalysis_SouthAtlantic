@@ -78,6 +78,7 @@ posterior_america = {}
 likelihood_africa = {}
 posterior_africa = {}
 avg_label = ''
+
 ###############################################################################
 # Building the histograms
 ###############################################################################
@@ -186,16 +187,16 @@ for k, loc in enumerate(sources):
 coordinates = dict(time=time_range,
                    lat=(["y"], lat_range))
 
-attributes = {'description': f"Beached posterior probability for America \
-              series sa-s{series:02d}.",
+attributes = {'description': f"Beached posterior probability for America" +
+              f"series sa-s{series:02d}.",
               'average_window': average_window}
 # Posterior dataset
 post_ame = xr.Dataset(data_vars=posterior_america,
                       coords=coordinates,
                       attrs=attributes)
 
-attributes = {'description': f"Beached posterior probability for Africa \
-              series sa-s{series:02d}.",
+attributes = {'description': "Beached posterior probability for Africa" +
+              f"series sa-s{series:02d}.",
               'average_window': average_window}
 # Posterior dataset
 post_afr = xr.Dataset(data_vars=posterior_africa,

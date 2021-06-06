@@ -82,6 +82,7 @@ likelihood = {}
 posterior = {}
 counts = {}
 avg_label = ''  # label to be modified if average is True. Print in output_path
+
 ###############################################################################
 # Building the histograms
 ###############################################################################
@@ -126,7 +127,14 @@ for loc in sources:
 
     counts[loc] = h
 
+# Some histograms have shorter time dimension. We select the shortest time
+# of them all.
 time = min(time_dimensions)
+
+# Compute the total numer of particles per bin per time.
+total_counts = np.zeros((time, *number_bins))
+for loc in sources:
+    total_counts += counts[loc][:time]
 
 ###############################################################################
 # To average or not to average, that's the question.
@@ -140,12 +148,16 @@ if compute_mean:
                                                 window=average_window)
         likelihood[loc] = mean
 
+    total_counts, _ = time_averaging_field(total_counts, window=average_window,
+                                           normalized=False)
     time = time//average_window
     avg_label = f'_aw{average_window}'  # average window nummer
 else:
     # convert counts to likelihood. The counts were normalized in line ~120.
     likelihood = counts
     time_range = np.arange(0, time, 1)
+
+print('total_counts', total_counts.shape)
 
 ###############################################################################
 # Normalizing constant (sum of all hypothesis)
@@ -179,6 +191,8 @@ for k, loc in enumerate(sources):
     # xarray Dataset formatting
     posterior[loc] = (["time", "x", "y"], pst)
     likelihood_xr[loc] = (["time", "x", "y"], lklhd)  # homgenizing time dim
+
+posterior['counts'] = (["time", "x", "y"], total_counts)
 
 ###############################################################################
 # Saving the likelihood & posteior as netCDFs
