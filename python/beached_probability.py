@@ -10,7 +10,7 @@ import pandas as pd
 
 def time_averaging_coast(array, window=30):
     """It averages the counts_america and computes a probability map that adds
-    up to 100%. It is built for the BEached particles 2D array.
+    up to 100%. It is built for the Beached particles 2D array.
 
     Parameters
     ----------

@@ -59,7 +59,7 @@ def time_averaging_field(array, window=30, normalized=True):
 ###############################################################################
 series = 6  # the number of the simulation series
 compute_mean = True  # True if you want to compute the average probability
-average_window = 1600  # days (or stored time steps from parcels simulations)
+average_window = 30  # days (or stored time steps from parcels simulations)
 
 print(f'Compute mean == {compute_mean}!')
 

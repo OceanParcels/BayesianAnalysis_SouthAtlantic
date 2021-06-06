@@ -361,6 +361,7 @@ priors['Mean'] = priors['Mean']/priors['Mean'].sum()  # nomarlizing
 # Save the stuff
 ###############################################################################
 
+np.save('../river_sources.npy', cluster_locations, allow_pickle=True)
 np.save('../release_positions.npy', release_points, allow_pickle=True)
 if save_priors:
     priors.to_csv('../data/analysis/priors_river_inputs.csv')
