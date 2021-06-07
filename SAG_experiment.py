@@ -8,7 +8,7 @@ import sys
 import local_kernels as kernels
 import xarray as xr
 
-series = 6
+series = 7
 resusTime = 69
 shoreTime = 10
 start_time = datetime.strptime('2016-04-01 12:00:00',
@@ -30,8 +30,8 @@ coastal_fields = xr.load_dataset('coastal_fields.nc')
 filesnames = {'U': data,
               'V': data}
 
-variables = {'U': 'utotal',
-             'V': 'vtotal'}  # Use utotal
+variables = {'U': 'uo',
+             'V': 'vo'}  # Use utotal
 
 dimensions = {'lat': 'latitude',
               'lon': 'longitude',
