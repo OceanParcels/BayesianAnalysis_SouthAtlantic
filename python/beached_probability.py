@@ -94,6 +94,7 @@ for loc in sources:
     time = particles.dims['obs']
     time_dimensions.append(time)
 
+    # filter the particles that beached
     particles = particles.where((particles.beach == 1))
 
     h_ame = np.zeros((time, number_bins[1]))
@@ -107,12 +108,14 @@ for loc in sources:
         lons = lons[index]
         lats = lats[index]
 
+        # Compute the histogram
         H, x_edges, y_edges = np.histogram2d(lons, lats, bins=number_bins,
                                              range=domain_limits)
 
-        H = np.nan_to_num(H)
-        count_ame = np.sum(H[:half_point, :], axis=0)
-        count_afr = np.sum(H[half_point:, :], axis=0)
+        plt.imshow(H)
+        H = np.nan_to_num(H)  # drop nans or comvert them to zeros
+        count_ame = np.sum(H[:half_point, :], axis=0)  # west meridional sum
+        count_afr = np.sum(H[half_point:-5, :], axis=0)  # east meridional sum
 
         h_ame[t] = count_ame
         h_afr[t] = count_afr
@@ -121,7 +124,6 @@ for loc in sources:
     counts_africa[loc] = h_afr
 
 time = min(time_dimensions)
-
 ###############################################################################
 # To average or not to average, that's the question.
 ###############################################################################
@@ -187,7 +189,7 @@ for k, loc in enumerate(sources):
 coordinates = dict(time=time_range,
                    lat=(["y"], lat_range))
 
-attributes = {'description': f"Beached posterior probability for America" +
+attributes = {'description': "Beached posterior probability for America" +
               f"series sa-s{series:02d}.",
               'average_window': average_window}
 # Posterior dataset
