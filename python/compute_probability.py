@@ -57,7 +57,7 @@ def time_averaging_field(array, window=30, normalized=True):
 ###############################################################################
 # Setting the parameters
 ###############################################################################
-series = 6  # the number of the simulation series
+series = 7  # the number of the simulation series
 compute_mean = True  # True if you want to compute the average probability
 average_window = 30  # days (or stored time steps from parcels simulations)
 
@@ -217,10 +217,10 @@ ds_like = xr.Dataset(data_vars=likelihood_xr,
                      coords=coordinates,
                      attrs=attributes)
 
-output_path_post = f'../data/analysis/sa-S{series:02d}' + \
-    f'/posterior_sa-S{series:02d}{avg_label}.nc'
-output_path_like = f'../data/analysis/sa-S{series:02d}' + \
-    f'/likelihood_sa-S{series:02d}{avg_label}.nc'
+output_path_post = f'../data/analysis/sa-s{series:02d}' + \
+    f'/posterior_sa-s{series:02d}{avg_label}.nc'
+output_path_like = f'../data/analysis/sa-s{series:02d}' + \
+    f'/likelihood_sa-s{series:02d}{avg_label}.nc'
 
 ds_post.to_netcdf(output_path_post)
 ds_like.to_netcdf(output_path_like)

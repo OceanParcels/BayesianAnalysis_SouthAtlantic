@@ -52,9 +52,9 @@ def time_averaging_coast(array, window=30):
 ###############################################################################
 # Setting the parameters
 ###############################################################################
-series = 6  # the number of the simulation series
+series = 7  # the number of the simulation series
 compute_mean = True  # True if you want to compute the average probability
-average_window = 1600  # window size for computing the probability
+average_window = 1599  # window size for computing the probability
 
 print(f'Compute mean == {compute_mean}!')
 
@@ -112,7 +112,6 @@ for loc in sources:
         H, x_edges, y_edges = np.histogram2d(lons, lats, bins=number_bins,
                                              range=domain_limits)
 
-        plt.imshow(H)
         H = np.nan_to_num(H)  # drop nans or comvert them to zeros
         count_ame = np.sum(H[:half_point, :], axis=0)  # west meridional sum
         count_afr = np.sum(H[half_point:-5, :], axis=0)  # east meridional sum
@@ -205,10 +204,10 @@ post_afr = xr.Dataset(data_vars=posterior_africa,
                       coords=coordinates,
                       attrs=attributes)
 
-output_path_ame = f'../data/analysis/sa-S{series:02d}' + \
-    f'/beach_posterior_America_sa-S{series:02d}{avg_label}.nc'
-output_path_afr = f'../data/analysis/sa-S{series:02d}' + \
-    f'/beach_posterior_Africa_sa-S{series:02d}{avg_label}.nc'
+output_path_ame = f'../data/analysis/sa-s{series:02d}' + \
+    f'/beach_posterior_America_sa-s{series:02d}{avg_label}.nc'
+output_path_afr = f'../data/analysis/sa-s{series:02d}' + \
+    f'/beach_posterior_Africa_sa-s{series:02d}{avg_label}.nc'
 
 post_ame.to_netcdf(output_path_ame)
 post_afr.to_netcdf(output_path_afr)
