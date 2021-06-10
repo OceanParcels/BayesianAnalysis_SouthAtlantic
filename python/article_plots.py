@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import matplotlib.ticker as mtick
-import os
 
 river_sources = np.load('../river_sources.npy', allow_pickle=True).item()
 
