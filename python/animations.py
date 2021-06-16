@@ -1,6 +1,4 @@
-"""Let's be honest, doing animations in python sucks!
-    I prefer the elegance of @gif in Julia. After this projet I'll
-    return to do all my analysis in Julia.
+"""very slow but it will make the animation :|
 """
 
 import numpy as np
@@ -74,25 +72,26 @@ title = ax.set_title(f'Date: {date_str}')
 
 
 def animate_realtime(i):
+    print(i)
     date_str = str(date_range[i].date())
     ax.set_title(f'Date: {date_str}')
 
     for j, loc in enumerate(river_sources.keys()):
-        time_id = np.where(simulations[loc]['time'] == timerange[i])
+        time_id = np.where(simulations[loc]['time'] == timerange[i*10])
         handles[j].set_offsets(np.c_[simulations[loc]['lon'].values[time_id],
                                      simulations[loc]['lat'].values[time_id]])
 
 
-anim_realtime = FuncAnimation(fig, animate_realtime, frames=1600)
+anim_realtime = FuncAnimation(fig, animate_realtime, frames=160)
 
 # Set up formatting for the movie files
 Writer = animation.writers['ffmpeg']
-writer = Writer(fps=30, metadata=dict(artist='Claudio Pierard'),
+writer = Writer(fps=15, metadata=dict(artist='Claudio Pierard'),
                 bitrate=3000)
 
 print('* Writing animation')
-anim_realtime.save(f'../animations/realtime_sa-s{series:02d}.mp4',
-                   writer=writer, dpi=100)
+anim_realtime.save(f'../animations/realtime_sa-s{series:02d}_3.mp4',
+                   writer=writer)  # this sux
 
 ###############################################################################
 # Particle age animations
