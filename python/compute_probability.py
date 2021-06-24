@@ -57,14 +57,14 @@ def time_averaging_field(array, window=30, normalized=True):
 ###############################################################################
 # Setting the parameters
 ###############################################################################
-series = 7  # the number of the simulation series
+series = 6  # the number of the simulation series
 compute_mean = True  # True if you want to compute the average probability
-average_window = 30  # days (or stored time steps from parcels simulations)
+average_window = 1600  # days (or stored time steps from parcels simulations)
 
 print(f'Compute mean == {compute_mean}!')
 
-domain_limits = [[-73, 25], [-80, -5]]
-number_bins = (98, 75)  # defined with respect to domain_limits to be 1x1 deg
+domain_limits = [[-73, 25], [-80, 0]]
+number_bins = (98, 80)  # defined with respect to domain_limits to be 1x1 deg
 
 # generating the lon and lat ranges.
 lon_range = np.linspace(domain_limits[0][0], domain_limits[0][1],

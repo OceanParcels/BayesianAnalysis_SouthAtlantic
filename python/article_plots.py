@@ -23,7 +23,7 @@ ordered_labels = ['Recife',
 ###############################################################################
 series = 6
 average_window = 1600
-compute_time_series = True
+compute_time_series = False
 output_path = f'../article_figs/sa-s{series:02d}/'
 ###############################################################################
 # Prabability maps
@@ -47,7 +47,7 @@ ax = ax.reshape(15)
 
 for k, loc in enumerate(ordered_labels):
     z = likelihood[loc][t]
-    ax[k].set_extent([-73.0, 25, -60, -5], crs=ccrs.PlateCarree())
+    ax[k].set_extent([-73.0, 25, -60, 0], crs=ccrs.PlateCarree())
     # ax[k].add_feature(cfeature.OCEAN)
     ax[k].add_feature(cfeature.LAND, zorder=2, facecolor='#808080')
     ax[k].add_feature(cfeature.RIVERS)
@@ -89,7 +89,7 @@ ax = ax.reshape(15)
 
 for k, loc in enumerate(ordered_labels):
     z = posterior[loc][t]
-    ax[k].set_extent([-73.0, 25, -60, -5],
+    ax[k].set_extent([-73.0, 25, -60, 0],
                      crs=ccrs.PlateCarree())
     # ax[k].add_feature(cfeature.OCEAN)
     ax[k].add_feature(cfeature.LAND, zorder=1, facecolor='#808080')
