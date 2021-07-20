@@ -59,7 +59,10 @@ def time_averaging_field(array, window=30, normalized=True):
 ###############################################################################
 series = 6  # the number of the simulation series
 compute_mean = True  # True if you want to compute the average probability
-average_window = 1600  # days (or stored time steps from parcels simulations)
+# average_window = 1600  # days (or stored time steps from parcels simulations)
+maxparticle_age = 1600 - 366  # length of simulation minus release period
+# 1234 - 41.3 months
+average_window = 28
 
 print(f'Compute mean == {compute_mean}!')
 

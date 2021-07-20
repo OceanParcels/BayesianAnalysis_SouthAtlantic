@@ -52,9 +52,9 @@ def time_averaging_coast(array, window=30):
 ###############################################################################
 # Setting the parameters
 ###############################################################################
-series = 7  # the number of the simulation series
+series = 6  # the number of the simulation series
 compute_mean = True  # True if you want to compute the average probability
-average_window = 1599  # window size for computing the probability
+average_window = 1234  # window size for computing the probability
 
 print(f'Compute mean == {compute_mean}!')
 

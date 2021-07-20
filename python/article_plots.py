@@ -22,9 +22,11 @@ ordered_labels = ['Recife',
 # parameters
 ###############################################################################
 series = 6
-average_window = 1600
-compute_time_series = False
+average_window = 1234
+compute_time_series = True
 output_path = f'../article_figs/sa-s{series:02d}/'
+
+min_particle_cond = 10
 ###############################################################################
 # Prabability maps
 ###############################################################################
@@ -132,8 +134,8 @@ if compute_time_series:
         f'sa-s{series:02d}_aw30.nc')
 
     A = (40, 47)
-    B = (70, 47)
-    C = (55, 60)
+    B = (78, 47)
+    C = (59, 60)
     time = np.linspace(1, 53, 53)
 
     fig = plt.figure(figsize=(6.5, 8), constrained_layout=True)
@@ -175,12 +177,16 @@ if compute_time_series:
     handles = []
 
     for k, loc in enumerate(ordered_labels):
-        hdl = ax11.plot(time, posterior30[loc][:, A[0], A[1]], '-',
-                        label=loc, color=f'C{k}')
-        ax21.plot(time, posterior30[loc][:,  B[0], B[1]], '-', label=loc,
-                  color=f'C{k}')
-        ax31.plot(time, posterior30[loc][:,  C[0], C[1]], '-', label=loc,
-                  color=f'C{k}')
+        a = posterior30[loc][:, A[0], A[1]].where(
+            posterior30['counts'][:, A[0], A[1]] > min_particle_cond)
+        b = posterior30[loc][:, B[0], B[1]].where(
+            posterior30['counts'][:, B[0], B[1]] > min_particle_cond)
+        c = posterior30[loc][:, C[0], C[1]].where(
+            posterior30['counts'][:, C[0], C[1]] > min_particle_cond)
+
+        hdl = ax11.plot(time, a, '-', label=loc, color=f'C{k}')
+        ax21.plot(time, b, '-', label=loc, color=f'C{k}')
+        ax31.plot(time, c, '-', label=loc, color=f'C{k}')
         handles.append(hdl[0])
 
     ax11_t = ax11.twinx()
@@ -198,17 +204,17 @@ if compute_time_series:
     ax11_t.set_ylim(0, up_lim)
     ax21_t.set_ylim(0, up_lim)
     ax31_t.set_ylim(0, up_lim)
-    ax11_t.set_xlim(0, 53)
-    ax21_t.set_xlim(0, 53)
-    ax31_t.set_xlim(0, 53)
+    ax11_t.set_xlim(0, 41)
+    ax21_t.set_xlim(0, 41)
+    ax31_t.set_xlim(0, 41)
     ax21_t.set_ylabel('Number of particles', fontsize=14, labelpad=10)
     ax21.set_ylabel('Posterior Probability', fontsize=14)
     ax11.grid()
     ax21.grid()
     ax31.grid()
-    ax11.set_ylim(-0.05, 1.05)
-    ax21.set_ylim(-0.05, 1.05)
-    ax31.set_ylim(-0.05, 1.05)
+    ax11.set_ylim(0, 1)
+    ax21.set_ylim(0, 1)
+    ax31.set_ylim(0, 1)
     ax11.text(1, 0.85, 'A', fontsize=14)
     ax21.text(1, 0.85, 'B', fontsize=14)
     ax31.text(1, 0.85, 'C', fontsize=14)
@@ -218,7 +224,7 @@ if compute_time_series:
     plt.savefig(output_path + 'time_series_map', dpi=300)
     plt.close()
 ###############################################################################
-# time series plot
+# Beaching probability plot
 ###############################################################################
 america = xr.load_dataset(
     f'../data/analysis/sa-s{series:02d}/beach_posterior_America_' +
