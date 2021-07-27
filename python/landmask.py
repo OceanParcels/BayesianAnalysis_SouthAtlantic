@@ -136,19 +136,26 @@ def distance_to_shore(landmask, dx=1):
     distance: array
         2D array containing the distances from shore.
     """
-    ci = get_coastal_cells(landmask)
-    landmask_i = landmask + ci
-    dist = ci
-    i = 0
+    # ci = get_coastal_cells(landmask)
+    # landmask_i = landmask + ci
+    # dist = ci
+    # i = 0
+    #
+    # while i < dist.max():
+    #     ci = get_coastal_cells(landmask_i)
+    #     landmask_i += ci
+    #     dist += ci*(i+2)
+    #     i += 1
+    #
+    # distance = dist*dx
+    # return distance
+    ci = get_coastal_nodes(landmask)  # direct neighbours
+    dist = ci*dx                     # 1 dx away
 
-    while i < dist.max():
-        ci = get_coastal_cells(landmask_i)
-        landmask_i += ci
-        dist += ci*(i+2)
-        i += 1
+    ci_d = get_coastal_nodes_diagonal(landmask)  # diagonal neighbours
+    dist_d = (ci_d - ci)*np.sqrt(2*dx**2)       # sqrt(2) dx away
 
-    distance = dist*dx
-    return distance
+    return dist+dist_d
 
 
 def generate_dataset(path2output, indices, output_path):

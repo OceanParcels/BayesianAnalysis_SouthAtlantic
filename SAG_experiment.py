@@ -22,7 +22,7 @@ loc = sys.argv[1]
 
 # data = '../data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
 data = 'data/mercatorpsy4v3r1_gl12_mean_20180101_R20180110.nc'
-output_path = f'data/local_debug.nc'
+output_path = 'data/free_slip_test_nobeaching.nc'
 
 # loading the fields that have to do with the coastline.
 coastal_fields = xr.load_dataset('coastal_fields.nc')
@@ -46,21 +46,22 @@ indices = {'lat': range(*coastal_fields.index_lat),
            'lon': range(*coastal_fields.index_lon)}
 
 fieldset = FieldSet.from_netcdf(filesnames, variables, dimensions,
-                                allow_time_extrapolation=True, indices=indices)
+                                allow_time_extrapolation=True, indices=indices,
+                                interp_method='freeslip')
 
 ###############################################################################
 # Adding the border current, which applies for all scenarios except for 0     #
 ###############################################################################
-u_border = coastal_fields.coastal_u.values
-v_border = coastal_fields.coastal_v.values
-fieldset.add_field(Field('borU', data=u_border,
-                         lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
-                         mesh='spherical'))
-fieldset.add_field(Field('borV', data=v_border,
-                         lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
-                         mesh='spherical'))
-fieldset.borU.units = GeographicPolar()
-fieldset.borV.units = Geographic()
+# u_border = coastal_fields.coastal_u.values
+# v_border = coastal_fields.coastal_v.values
+# fieldset.add_field(Field('borU', data=u_border,
+#                          lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
+#                          mesh='spherical'))
+# fieldset.add_field(Field('borV', data=v_border,
+#                          lon=fieldset.U.grid.lon, lat=fieldset.U.grid.lat,
+#                          mesh='spherical'))
+# fieldset.borU.units = GeographicPolar()
+# fieldset.borV.units = Geographic()
 
 ###############################################################################
 # Adding in the  land cell identifiers                                        #
@@ -158,9 +159,8 @@ def delete_particle(particle, fieldset, time):
 
 
 totalKernel = pset.Kernel(kernels.AdvectionRK4_floating) + \
-    pset.Kernel(kernels.AntiBeachNudging) + \
-    pset.Kernel(kernels.BrownianMotion2D) + \
-    pset.Kernel(kernels.beach)
+    pset.Kernel(kernels.BrownianMotion2D)
+# pset.Kernel(kernels.beach)
 
 
 # pset.Kernel(kernels.beach)
