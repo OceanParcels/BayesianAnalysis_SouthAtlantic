@@ -126,6 +126,7 @@ for loc in sources:
                                                       bins=number_bins,
                                                       range=domain_limits,
                                                       density=True)
+
             h[t] = H_norm
 
     counts[loc] = h
@@ -138,6 +139,11 @@ time = min(time_dimensions)
 total_counts = np.zeros((time, *number_bins))
 for loc in sources:
     total_counts += counts[loc][:time]
+
+if compute_mean:
+    str = f'../data/analysis/sa-s{series:02d}' + \
+        f'/number-particles_sa-s{series:02d}.nc'
+    np.save(str, total_counts)
 
 ###############################################################################
 # To average or not to average, that's the question.
