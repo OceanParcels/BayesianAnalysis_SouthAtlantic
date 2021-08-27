@@ -1,6 +1,6 @@
 """
-Computes the probability field of beached particles from a Ocean Parcels
-simulations. Computes the posterior probability in tha latitude of the beached
+Computes the probability field of beached particles from Ocean Parcels
+simulations. Computes the posterior probability in the latitude of the beached
 particles.
 """
 import numpy as np
