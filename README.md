@@ -1,4 +1,4 @@
-# Source Code for article "Attribution of River-Sourced Floating Plastic in the South Atlantic Ocean Using Bayesian Inference"
+### Source Code for article "Attribution of River-Sourced Floating Plastic in the South Atlantic Ocean Using Bayesian Inference"
 
 This repository contains the scripts to reproduce the results shown in the article "Attribution of River-Sourced Floating Plastic in the South Atlantic Ocean Using Bayesian Inference".
 
