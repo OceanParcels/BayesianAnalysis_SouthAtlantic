@@ -1,8 +1,8 @@
 ### Source Code for article "Attribution of River-Sourced Floating Plastic in the South Atlantic Ocean Using Bayesian Inference"
 
-This repository contains the scripts to reproduce the results shown in the article "Attribution of River-Sourced Floating Plastic in the South Atlantic Ocean Using Bayesian Inference".
+This repository contains the scripts to reproduce the results shown in the article "Attribution of River-Sourced Floating Plastic in the South Atlantic Ocean Using Bayesian Inference". In general, you can find the scripts for running the simulation and the scripts for analysing the output of the simulation.
 
-This code uses Ocean Parcels to perform the simulations. We recommend creating and environment to run the code.
+This code uses [Ocean Parcels](https://oceanparcels.org) to perform the simulations. We recommend creating and environment to run the code as explained [here](https://oceanparcels.org/#installing). Also, you need to instal the `requirements.txt`
 
 Here is a description of scripts according to it's function.
 
