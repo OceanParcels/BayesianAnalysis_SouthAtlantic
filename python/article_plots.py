@@ -1,3 +1,11 @@
+'''
+This script plots the article shown in the article, except for the map with the
+clusters. This script requires the already processed data obtained by running
+`compute_probability.py` and `beached_probability.py`.
+
+'''
+
+
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
