@@ -1,0 +1,7 @@
+###### Requirements for Analysis ######`
+pandas
+numpy
+matplotlib
+xarray
+cartopy
+datetime
