@@ -7,9 +7,9 @@ This code uses [Ocean Parcels](https://oceanparcels.org) to perform the simulati
 Here is a description of scripts according to it's function.
 
 #### Analysis
-To run the following scripts download data from the simulations from the supplementary material. For the scripts to work make sure to save the Data from the supplementary material within this repository and name the directory as `Pierard_et_al_GRL_2021`.
+To run the following scripts download data from the simulations from the supplementary material. For the scripts to work make sure to save the Data from the supplementary material within this repository such as `BayesianInference_SouthAtlantic/Pierard_et_al_GRL_2021`.
 
-We recomend running the scripts in the following order:
+We recommend running the scripts in the following order:
 
 1. `python/compute_probability.py`: computes the probabilities in the domain.
 2. `python/beached_probability.py`: computes the probabilities
