@@ -166,8 +166,8 @@ for t in range(time):
 
     for j, loc in enumerate(sources):
 
-        total[j, 0] = likelihood_america[loc][t]*priors['Mean'][loc]
-        total[j, 1] = likelihood_africa[loc][t]*priors['Mean'][loc]
+        total[j, 0] = likelihood_america[loc][t]*priors['prior'][loc]
+        total[j, 1] = likelihood_africa[loc][t]*priors['prior'][loc]
 
     normalizing_constant[t, 0] = np.sum(total[:, 0, :], axis=0)
     normalizing_constant[t, 1] = np.sum(total[:, 1, :], axis=0)
@@ -181,9 +181,9 @@ for k, loc in enumerate(sources):
     aux_afr = np.zeros((time, number_bins[1]))
 
     for t in range(time):
-        aux_ame[t] = likelihood_america[loc][t]*priors['Mean'][loc] / \
+        aux_ame[t] = likelihood_america[loc][t]*priors['prior'][loc] / \
             normalizing_constant[t, 0]
-        aux_afr[t] = likelihood_africa[loc][t]*priors['Mean'][loc] / \
+        aux_afr[t] = likelihood_africa[loc][t]*priors['prior'][loc] / \
             normalizing_constant[t, 1]
     posterior_america[loc] = (["time", "y"], aux_ame)
     posterior_africa[loc] = (["time",  "y"], aux_afr)
