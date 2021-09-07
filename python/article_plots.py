@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import matplotlib.ticker as mtick
-
+import os
 river_sources = np.load('../river_sources.npy', allow_pickle=True).item()
 
 ordered_labels = ['Recife',
@@ -26,13 +26,19 @@ ordered_labels = ['Recife',
                   'Rio-de-la-Plata',
                   'Cape-Town']
 
+
+# Creating the directory to store the plots
+newpath = r'../article_figs/'
+if not os.path.exists(newpath):
+    os.makedirs(newpath)
+
 ###############################################################################
 # parameters
 ###############################################################################
 series = 6
 average_window = 1234
 compute_time_series = True
-output_path = f'../article_figs/sa-s{series:02d}/'
+output_path = '../article_figs/'
 
 min_particle_cond = 10
 
@@ -42,11 +48,9 @@ plt.rcParams['font.family'] = 'sans-serif'
 # Prabability maps
 ###############################################################################
 posterior = xr.load_dataset(
-    f'../data/analysis/sa-s{series:02d}/posterior_sa-s{series:02d}' +
-    f'_aw{average_window}.nc')
+    f'../analysis/posterior_aw{average_window}.nc')
 likelihood = xr.load_dataset(
-    f'../data/analysis/sa-s{series:02d}/likelihood_sa-s{series:02d}' +
-    f'_aw{average_window}.nc')
+    f'../analysis/likelihood_aw{average_window}.nc')
 
 labels = list(posterior.keys())
 y, x = np.meshgrid(posterior['lat'], posterior['lon'])
@@ -135,16 +139,14 @@ plt.savefig(output_path + 'posterior_4y_average.pdf', format='pdf')
 plt.close()
 
 ###############################################################################
-# time series plot cropped
+# Particle Age Distributions
 ###############################################################################
 plt.rcParams['font.size'] = 8
 if compute_time_series:
     posterior30 = xr.load_dataset(
-        f'../data/analysis/sa-s{series:02d}/posterior_' +
-        f'sa-s{series:02d}_aw30.nc')
+        '../analysis/posterior_aw30.nc')
     likelihood30 = xr.load_dataset(
-        f'../data/analysis/sa-s{series:02d}/likelihood_' +
-        f'sa-s{series:02d}_aw30.nc')
+        '../analysis/likelihood_aw30.nc')
 
     A = (35, 47)
     B = (78, 47)
@@ -247,11 +249,9 @@ if compute_time_series:
 # Beaching probability plot
 ###############################################################################
 america = xr.load_dataset(
-    f'../data/analysis/sa-s{series:02d}/beach_posterior_America_' +
-    f'sa-s{series:02d}_average{average_window}.nc')
+    f'..analysis/beach_posterior_America_average{average_window}.nc')
 africa = xr.load_dataset(
-    f'../data/analysis/sa-s{series:02d}/beach_posterior_Africa_' +
-    f'sa-s{series:02d}_average{average_window}.nc')
+    f'../analysis/beach_posterior_Africa_average{average_window}.nc')
 
 african_sources = ['Congo', 'Cape-Town']
 american_sources = ['Paraiba', 'Itajai', 'Rio-de-la-Plata', 'Rio-de-Janeiro',

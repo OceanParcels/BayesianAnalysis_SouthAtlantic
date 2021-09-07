@@ -6,6 +6,7 @@ the posterior probability using the priors.
 import numpy as np
 import xarray as xr
 import pandas as pd
+import os
 
 
 def time_averaging_field(array, window=30, normalized=True):
@@ -54,6 +55,11 @@ def time_averaging_field(array, window=30, normalized=True):
     return averaged, time_array
 
 
+# Creating the directory to store the analysis dataset
+newpath = r'../analysis/'
+if not os.path.exists(newpath):
+    os.makedirs(newpath)
+
 ###############################################################################
 # Setting the parameters
 ###############################################################################
@@ -76,7 +82,8 @@ lat_range = np.linspace(domain_limits[1][0], domain_limits[1][1],
                         number_bins[1])
 
 # Loading priors. Computed with release_points.py script.
-priors = pd.read_csv('../data/analysis/priors_river_inputs.csv', index_col=0)
+priors = pd.read_csv('../Pierard_et_al_GRL_2021/priors_river_inputs.csv',
+                     index_col=0)
 sources = list(priors.index)
 number_sources = len(sources)
 
@@ -94,7 +101,7 @@ print('Building histograms')
 time_dimensions = []
 for loc in sources:
     print(f'- {loc}')
-    path_2_file = f"../data/simulations/sa-s{series:02d}" + \
+    path_2_file = f"../Pierard_et_al_GRL_2021/sa-s{series:02d}" + \
         f"/sa-s{series:02d}-{loc}.nc"
     particles = xr.load_dataset(path_2_file)
     n = particles.dims['traj']
@@ -141,8 +148,7 @@ for loc in sources:
     total_counts += counts[loc][:time]
 
 if compute_mean:
-    str = f'../data/analysis/sa-s{series:02d}' + \
-        f'/number-particles_sa-s{series:02d}.nc'
+    str = f'../analysis/sa-s{series:02d}/number-particles_sa-s{series:02d}.nc'
     np.save(str, total_counts)
 
 ###############################################################################
@@ -226,9 +232,9 @@ ds_like = xr.Dataset(data_vars=likelihood_xr,
                      coords=coordinates,
                      attrs=attributes)
 
-output_path_post = f'../data/analysis/sa-s{series:02d}' + \
+output_path_post = f'../analysis/sa-s{series:02d}' + \
     f'/posterior_sa-s{series:02d}{avg_label}.nc'
-output_path_like = f'../data/analysis/sa-s{series:02d}' + \
+output_path_like = f'../analysis/sa-s{series:02d}' + \
     f'/likelihood_sa-s{series:02d}{avg_label}.nc'
 
 ds_post.to_netcdf(output_path_post)

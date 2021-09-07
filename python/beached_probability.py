@@ -6,6 +6,7 @@ particles.
 import numpy as np
 import xarray as xr
 import pandas as pd
+import os
 
 
 def time_averaging_coast(array, window=30):
@@ -49,6 +50,11 @@ def time_averaging_coast(array, window=30):
     return averaged, time_array
 
 
+# Creating the directory to store the analysis dataset
+newpath = r'../analysis/'
+if not os.path.exists(newpath):
+    os.makedirs(newpath)
+
 ###############################################################################
 # Setting the parameters
 ###############################################################################
@@ -66,7 +72,8 @@ lat_range = np.linspace(domain_limits[1][0], domain_limits[1][1],
                         number_bins[1])
 
 # Loading priors. Computed with release_points.py script.
-priors = pd.read_csv('../priors_river_inputs.csv', index_col=0)
+priors = pd.read_csv('../Pierard_et_al_GRL_2021/priors_river_inputs.csv',
+                     index_col=0)
 sources = list(priors.index)
 number_sources = len(sources)
 
@@ -87,8 +94,7 @@ print('Building histograms')
 time_dimensions = []
 for loc in sources:
     print(f'- {loc}')
-    path_2_file = f"../data/simulations/sa-s{series:02d}" + \
-        f"/sa-s{series:02d}-{loc}.nc"
+    path_2_file = f"../Pierard_et_al_GRL_2021/sa-simulation-{loc}.nc"
     particles = xr.load_dataset(path_2_file)
     n = particles.dims['traj']
     time = particles.dims['obs']
@@ -188,26 +194,22 @@ for k, loc in enumerate(sources):
 coordinates = dict(time=time_range,
                    lat=(["y"], lat_range))
 
-attributes = {'description': "Beached posterior probability for America" +
-              f"series sa-s{series:02d}.",
+attributes = {'description': "Beached posterior probability for America.",
               'average_window': average_window}
 # Posterior dataset
 post_ame = xr.Dataset(data_vars=posterior_america,
                       coords=coordinates,
                       attrs=attributes)
 
-attributes = {'description': "Beached posterior probability for Africa" +
-              f"series sa-s{series:02d}.",
+attributes = {'description': "Beached posterior probability for Africa.",
               'average_window': average_window}
 # Posterior dataset
 post_afr = xr.Dataset(data_vars=posterior_africa,
                       coords=coordinates,
                       attrs=attributes)
 
-output_path_ame = '../data/analysis/' + \
-    f'beach_posterior_America_sa-s{series:02d}{avg_label}.nc'
-output_path_afr = '../data/analysis/' + \
-    f'beach_posterior_Africa_sa-s{series:02d}{avg_label}.nc'
+output_path_ame = f'../analysis/beach_posterior_America_{avg_label}.nc'
+output_path_afr = f'../analysis/beach_posterior_Africa_{avg_label}.nc'
 
 post_ame.to_netcdf(output_path_ame)
 post_afr.to_netcdf(output_path_afr)
