@@ -58,7 +58,7 @@ if not os.path.exists(newpath):
 ###############################################################################
 # Setting the parameters
 ###############################################################################
-series = 6  # the number of the simulation series
+
 compute_mean = True  # True if you want to compute the average probability
 average_window = 1234  # window size for computing the probability
 
@@ -146,7 +146,7 @@ if compute_mean:
         likelihood_africa[loc] = mean_afr
 
     time = time//average_window
-    avg_label = f'_average{average_window}'
+    avg_label = f'average_{average_window}'
 
 else:
     # convert counts to likelihood. The counts were normalized in line ~120.
