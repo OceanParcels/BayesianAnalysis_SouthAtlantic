@@ -203,8 +203,8 @@ def center_of_mass(DF):
 
 
 def rivers_per_location(DF, loc_coords, radius, binned=False, tolerance=0.1):
-    """It cluster the rivers in a square with sides 2*radius. The clustering is
-    done iteratively using the center of mass.
+    """It clusters the rivers in a square with sides 2*radius. The clustering
+    is done iteratively using the center of mass.
 
     Parameters
     ----------
@@ -324,12 +324,14 @@ priors = {}
 
 cluster_percent = 0  # counter for the percentege of plastic in the clusters.
 merged_rivers = 0  # counter for the number or rivers in all the clusters.
+unclustered_mask = 0  # Empty value for the mask for unclustered rivers
 
 for i, loc in enumerate(cluster_locations):
     print(loc)
     # get the local DF for cluster
     mask, _CM = rivers_per_location(river_discharge, cluster_locations[loc],
                                     r, binned=True)
+    unclustered_mask = unclustered_mask | mask  # True | False = True
     loc_df = river_discharge[mask]
 
     # number of rivers merged
@@ -353,6 +355,23 @@ for i, loc in enumerate(cluster_locations):
     # the experiment.
     release_points[loc] = loc_df.sample(n=N, replace=True, weights='p')
 
+#  -- Unclustered
+unclustered_mask = ~unclustered_mask  # Flipping the Trues to Falses
+unclustered = river_discharge[unclustered_mask]
+no_rivers = unclustered['merged_rivers'].sum()
+unclustered_percent = unclustered['dots_exten'].sum()/total_plastic
+p = pd.DataFrame({
+    'p': unclustered['dots_exten']/unclustered['dots_exten'].sum()})
+unclustered = unclustered.drop(['dots_exten'], axis=1)
+unclustered = pd.concat([unclustered, p], axis=1)
+unclustered.reset_index(drop=True, inplace=True)
+
+priors['Unclustered'] = [unclustered_percent, no_rivers]
+
+release_points['Unclustered'] = unclustered.sample(n=N, replace=True,
+                                                   weights='p')
+
+#  -- Priors
 priors = pd.DataFrame(priors).T
 priors = priors.rename(columns={0: 'Mean', 1: 'merged_rivers'})
 priors['Mean'] = priors['Mean']/priors['Mean'].sum()  # nomarlizing
