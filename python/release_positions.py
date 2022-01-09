@@ -358,23 +358,37 @@ for i, loc in enumerate(cluster_locations):
 #  -- Unclustered
 unclustered_mask = ~unclustered_mask  # Flipping the Trues to Falses
 unclustered = river_discharge[unclustered_mask]
-no_rivers = unclustered['merged_rivers'].sum()
-unclustered_percent = unclustered['dots_exten'].sum()/total_plastic
+# no_rivers = unclustered['merged_rivers'].sum()
+# unclustered_percent = unclustered['dots_exten'].sum()/total_plastic
 p = pd.DataFrame({
     'p': unclustered['dots_exten']/unclustered['dots_exten'].sum()})
-unclustered = unclustered.drop(['dots_exten'], axis=1)
+# unclustered = unclustered.drop(['dots_exten'], axis=1)
 unclustered = pd.concat([unclustered, p], axis=1)
 unclustered.reset_index(drop=True, inplace=True)
 
-priors['Unclustered'] = [unclustered_percent, no_rivers]
+unclustered_africa = unclustered[unclustered['X_bin'] > 0]
+un_africa_percet = unclustered_africa['dots_exten'].sum()/total_plastic
 
-release_points['Unclustered'] = unclustered.sample(n=N, replace=True,
-                                                   weights='p')
+unclustered_america = unclustered[unclustered['X_bin'] < 0]
+un_america_percet = unclustered_america['dots_exten'].sum()/total_plastic
+
+priors['Unclustered-Africa'] = [un_africa_percet,
+                                unclustered_africa['merged_rivers'].sum()]
+priors['Unclustered-America'] = [un_america_percet,
+                                 unclustered_america['merged_rivers'].sum()]
+
+release_points['Unclustered-Africa'] = unclustered_africa.sample(n=N,
+                                                                 replace=True,
+                                                                 weights='p')
+
+release_points['Unclustered-America'] = unclustered_america.sample(n=N,
+                                                                   replace=True,
+                                                                   weights='p')
 
 #  -- Priors
 priors = pd.DataFrame(priors).T
-priors = priors.rename(columns={0: 'Mean', 1: 'merged_rivers'})
-priors['Mean'] = priors['Mean']/priors['Mean'].sum()  # nomarlizing
+priors = priors.rename(columns={0: 'prior', 1: 'merged_rivers'})
+# priors['prior'] = priors['prior']/priors['prior'].sum()  # nomarlizing
 
 ###############################################################################
 # Save the stuff

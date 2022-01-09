@@ -4,8 +4,6 @@ clusters. This script requires the already processed data obtained by running
 `compute_probability.py` and `beached_probability.py`.
 
 '''
-
-
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
@@ -45,7 +43,7 @@ min_particle_cond = 10
 plt.rcParams['font.size'] = 9
 plt.rcParams['font.family'] = 'sans-serif'
 ###############################################################################
-# Prabability maps
+# Probability maps
 ###############################################################################
 posterior = xr.load_dataset(
     f'../analysis/posterior_average_{average_window}.nc')
