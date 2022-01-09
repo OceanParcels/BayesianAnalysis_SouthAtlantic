@@ -264,7 +264,7 @@ def rivers_per_location(DF, loc_coords, radius, binned=False, tolerance=0.1):
 r = 1  # radius for clusters.
 N = 100000  # Number of particles realesed per source.
 South_Atlantic_region = (-70, 25, -50, -5)  # the region to study
-save_priors = True  # True for saving the priors.
+save_priors = False  # True for saving the priors.
 
 ###############################################################################
 # Load all requiered data
