@@ -119,8 +119,8 @@ for loc in sources:
                                              range=domain_limits)
 
         H = np.nan_to_num(H)  # drop nans or comvert them to zeros
-        count_ame = np.sum(H[:half_point, :], axis=0)  # west meridional sum
-        count_afr = np.sum(H[half_point:-5, :], axis=0)  # east meridional sum
+        count_ame = np.sum(H[:55, :], axis=0)  # west meridional sum
+        count_afr = np.sum(H[70:-5, :], axis=0)  # east meridional sum
 
         h_ame[t] = count_ame
         h_afr[t] = count_afr

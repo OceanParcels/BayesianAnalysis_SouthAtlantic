@@ -1,3 +1,6 @@
+""""
+Script for computing the uncertainties by doing Bootstrapping.
+"""
 import numpy as np
 import xarray as xr
 import pandas as pd
@@ -53,7 +56,10 @@ def time_averaging_field(array, window=30, normalized=True):
 series = 6  # the number of the simulation series
 compute_mean = True  # True if you want to compute the average probability
 average_window = 1600  # days (or stored time steps from parcels simulations)
-N = 2
+
+# Bootstrap-parameters
+sample_size = 1000
+number_samples = 2  # at least 50 up to 100
 
 print(f'Compute mean == {compute_mean}!')
 
@@ -89,18 +95,22 @@ for loc in sources:
     path_2_file = f"../data/simulations/sa-s{series:02d}" + \
         f"/sa-s{series:02d}-{loc}.nc"
     particles = xr.load_dataset(path_2_file)
-    n = particles.dims['traj']
+
+    trajectories = particles.dims['traj']
     time = particles.dims['obs']
     time_dimensions.append(time)  # to compute the minimum time between locs
 
-    h = np.zeros((N, time, *number_bins))
+    h = np.zeros((number_samples, time, *number_bins))
     # h_norm = np.zeros((time, *number_bins))
-    for n in N:
+    for i_sample in range(number_samples):
+        resampled_index = np.random.choice(trajectories, sample_size,
+                                           replace=True)
+
         for t in range(time):
-            lons = particles['lon'][:, t].values
+            lons = particles['lon'][resampled_index, t].values
             index = np.where(~np.isnan(lons))
             lons = lons[index]
-            lats = particles['lat'][:, t].values
+            lats = particles['lat'][resampled_index, t].values
             lats = lats[index]
 
             if compute_mean:
@@ -108,7 +118,7 @@ for loc in sources:
                 H, x_edges, y_edges = np.histogram2d(lons, lats,
                                                      bins=number_bins,
                                                      range=domain_limits)
-                h[n, t] = H
+                h[i_sample, t] = H
 
             else:
                 # if false or else, the histograms are normalized, therefore
@@ -117,18 +127,20 @@ for loc in sources:
                                                           bins=number_bins,
                                                           range=domain_limits,
                                                           density=True)
-                h[n, t] = H_norm
+                h[i_sample, t] = H_norm
 
     counts[loc] = h
+
+# --- hasta aqui voy seguro.
 
 # Some histograms have shorter time dimension. We select the shortest time
 # of them all.
 time = min(time_dimensions)
 
 # Compute the total numer of particles per bin per time.
-total_counts = np.zeros((time, *number_bins))
-for loc in sources:
-    total_counts += counts[loc][:time]
+# total_counts = np.zeros((time, *number_bins))
+# for loc in sources:
+#     total_counts += counts[loc][:time]
 
 ###############################################################################
 # To average or not to average, that's the question.
