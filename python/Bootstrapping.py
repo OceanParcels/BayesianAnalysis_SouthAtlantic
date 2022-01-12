@@ -58,8 +58,8 @@ compute_mean = True  # True if you want to compute the average probability
 average_window = 1600  # days (or stored time steps from parcels simulations)
 
 # Bootstrap-parameters
-sample_size = 1000
-number_samples = 50  # at least 50 up to 100
+sample_size = 100000
+number_samples = 100  # at least 50 up to 100
 
 print(f'Compute mean == {compute_mean}!')
 
@@ -95,7 +95,7 @@ for loc in sources:
     print(f'- {loc}')
     # path_2_file = f"../data/simulations/sa-s{series:02d}" + \
     # f"/sa-s{series:02d}-{loc}.nc"
-    path_2_file = f"../scratch/cpierard/sa-s{series:02d}-{loc}.nc"
+    path_2_file = f"/scratch/cpierard/sa-s{series:02d}-{loc}.nc"
     particles = xr.load_dataset(path_2_file)
 
     trajectories = particles.dims['traj']
@@ -229,6 +229,6 @@ ds_post = xr.Dataset(data_vars=standard_deviation,
                      attrs=attributes)
 
 # output_path_post = f'../analysis/STD_{avg_label}.nc'
-output_path_post = f'../scratch/cpierard/STD_{avg_label}.nc'
+output_path_post = f'/scratch/cpierard/STD_{avg_label}.nc'
 
 ds_post.to_netcdf(output_path_post)
