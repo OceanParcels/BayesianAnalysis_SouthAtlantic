@@ -118,7 +118,7 @@ for loc in sources:
         H, x_edges, y_edges = np.histogram2d(lons, lats, bins=number_bins,
                                              range=domain_limits)
 
-        H = np.nan_to_num(H)  # drop nans or comvert them to zeros
+        H = np.nan_to_num(H)  # drop nans or covert them to zeros
         count_ame = np.sum(H[:55, :], axis=0)  # west meridional sum
         count_afr = np.sum(H[70:-5, :], axis=0)  # east meridional sum
 
