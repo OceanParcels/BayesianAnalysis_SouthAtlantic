@@ -22,12 +22,13 @@ ordered_labels = ['Recife',
                   'Itajai',
                   'Porto-Alegre',
                   'Rio-de-la-Plata',
+                  'Unclustered-America',
                   'Cape-Town',
                   'Congo',
-                  'Unclustered-Africa',
-                  'Unclustered-America']
+                  'Unclustered-Africa']
 
-clusters = ordered_labels[:-2]
+clusters = ordered_labels[:-1]
+clusters.pop(8)
 
 # Creating the directory to store the plots
 newpath = r'../article_figs/'
@@ -48,13 +49,16 @@ plt.rcParams['font.family'] = 'sans-serif'
 ###############################################################################
 # Probability maps
 ###############################################################################
+print('Plotting pobability maps')
 posterior = xr.load_dataset(
     f'../analysis/posterior_average_{average_window}.nc')
 likelihood = xr.load_dataset(
     f'../analysis/likelihood_average_{average_window}.nc')
 
-labels = list(posterior.keys())
 y, x = np.meshgrid(posterior['lat'], posterior['lon'])
+
+etiquetas = list(posterior.keys())  # this is for the labels of the age \
+etiquetas.pop(-1)  # probabilities and the beached plots.
 
 # likelihood
 t = 0
@@ -152,6 +156,7 @@ plt.close()
 ###############################################################################
 # Particle Age Distributions
 ###############################################################################
+# print('- Age Distributions plots')
 # plt.rcParams['font.size'] = 8
 #
 # posterior30 = xr.load_dataset('../analysis/posterior_average_30.nc')
@@ -257,6 +262,7 @@ plt.close()
 ###############################################################################
 # Beaching probability plot
 ###############################################################################
+print('- Plotting the beaching probabilities')
 america = xr.load_dataset(
     f'../analysis/beach_posterior_America_average_{average_window}.nc')
 africa = xr.load_dataset(
@@ -266,6 +272,19 @@ african_sources = ['Congo', 'Cape-Town']
 american_sources = ['Paraiba', 'Itajai', 'Rio-de-la-Plata', 'Rio-de-Janeiro',
                     'Porto-Alegre', 'Santos', 'Recife', 'Salvador']
 
+ordered_labels_2 = ['Recife',
+                    'Santos',
+                    'Unclustered-America',
+                    'Salvador',
+                    'Itajai',
+                    'Cape-Town',
+                    'Paraiba',
+                    'Porto-Alegre',
+                    'Congo',
+                    'Rio-de-Janeiro',
+                    'Rio-de-la-Plata',
+                    'Unclustered-Africa']
+
 fig = plt.figure(figsize=(8, 8))
 gs = fig.add_gridspec(2, 2, wspace=0.1, height_ratios=[0.9, 0.1])
 ax = gs.subplots(sharey=True)
@@ -273,7 +292,7 @@ ax = gs.subplots(sharey=True)
 lower_margin_am = 0
 lower_margin_af = 0
 
-for k, loc in enumerate(ordered_labels):
+for k, loc in enumerate(etiquetas):
 
     if loc in clusters:
         ax[0, 0].barh(america['lat'], america[loc][0], label=loc, height=1.02,
@@ -319,7 +338,6 @@ ax[0, 0].set_xticklabels(my_ticks)
 ax[0, 1].set_xticklabels(my_ticks)
 ax[0, 0].set_ylim(-51, -5)
 ax[0, 0].set_xlim(0, 1)
-ax[0, 0].legend(bbox_to_anchor=(1, -0.15), loc='center', ncol=3)
 ax[0, 0].set_title('American coast', fontsize=14)
 
 ax[0, 1].set_title('African coast', fontsize=14)
@@ -328,9 +346,20 @@ ax[0, 0].set_ylabel('Latitude', fontsize=13)
 # ax[0,1].set_xlabel('Probability', fontsize=13)
 ax[0, 0].grid(color='k', linestyle='--', alpha=0.5)
 ax[0, 1].grid(color='k', linestyle='--', alpha=0.5)
-
+ax[0, 1].set_xlim(0, 1)
 ax[1, 0].axis('off')
 ax[1, 1].axis('off')
+
+handles, leg_labels = ax[0, 0].get_legend_handles_labels()
+new_handles = []
+
+for m in ordered_labels_2:
+    for n, loc in enumerate(leg_labels):
+        if loc == m:
+            new_handles.append(handles[n])
+
+ax[0, 0].legend(new_handles, ordered_labels_2, bbox_to_anchor=(1, -0.15),
+                loc='center', ncol=4)
 
 plt.savefig(output_path + 'beached_posterior.pdf', format='pdf')
 plt.close()
