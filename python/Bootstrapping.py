@@ -95,7 +95,8 @@ for loc in sources:
     print(f'- {loc}')
     # path_2_file = f"../data/simulations/sa-s{series:02d}" + \
     # f"/sa-s{series:02d}-{loc}.nc"
-    path_2_file = f"/scratch/cpierard/sa-s{series:02d}-{loc}.nc"
+    path_2_file = "/data/oceanparcels/output_data/data_Claudio/" + \
+        f"sa-s{series:02d}-{loc}.nc"
     particles = xr.load_dataset(path_2_file)
 
     trajectories = particles.dims['traj']
