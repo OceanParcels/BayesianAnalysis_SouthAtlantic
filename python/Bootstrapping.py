@@ -133,7 +133,7 @@ for loc in sources:
                                                           density=True)
                 h[i_sample, t] = H_norm
 
-        np.save(f'histograms_{loc}_{t}.npy', h)
+        np.save(f'/scratch/cpierard/histograms_{loc}_{t}.npy', h)
     counts[loc] = h
 #    dump to npy file
 
@@ -216,7 +216,7 @@ for k, loc in enumerate(sources):
     standard_deviation[loc] = (["time", "x", "y"],
                                np.std(posterior[loc], axis=0))
 
-np.save('Santandard_deviation.npy', standard_deviation)
+np.save('/scratch/cpierard/Santandard_deviation.npy', standard_deviation)
 ###############################################################################
 # Saving the likelihood & posteior as netCDFs
 ###############################################################################
