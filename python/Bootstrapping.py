@@ -55,11 +55,11 @@ def time_averaging_field(array, window=30, normalized=True):
 ###############################################################################
 series = 6  # the number of the simulation series
 compute_mean = True  # True if you want to compute the average probability
-average_window = 1600  # days (or stored time steps from parcels simulations)
+average_window = 30  # days (or stored time steps from parcels simulations)
 
 # Bootstrap-parameters
-sample_size = 100000
-number_samples = 100  # at least 50 up to 100
+sample_size = 10000
+number_samples = 50  # at least 50 up to 100
 
 print(f'Compute mean == {compute_mean}!')
 
@@ -112,13 +112,13 @@ for loc in sources:
         for t in range(time):
             lons = particles['lon'][resampled_index, t].values
             index = np.where(~np.isnan(lons))
-            lons = lons[index]
+            # lons = lons[index]
             lats = particles['lat'][resampled_index, t].values
-            lats = lats[index]
+            # lats = lats[index]
 
             if compute_mean:
                 # if true, the histograms are not normalized.
-                H, x_edges, y_edges = np.histogram2d(lons, lats,
+                H, x_edges, y_edges = np.histogram2d(lons[index], lats[index],
                                                      bins=number_bins,
                                                      range=domain_limits)
                 h[i_sample, t] = H
@@ -126,14 +126,16 @@ for loc in sources:
             else:
                 # if false or else, the histograms are normalized, therefore
                 # we get directly the likelihood.
-                H_norm, x_edges, y_edges = np.histogram2d(lons, lats,
+                H_norm, x_edges, y_edges = np.histogram2d(lons[index],
+                                                          lats[index],
                                                           bins=number_bins,
                                                           range=domain_limits,
                                                           density=True)
                 h[i_sample, t] = H_norm
 
+        np.save(f'histograms_{loc}_{t}', h)
     counts[loc] = h
-
+#    dump to npy file
 
 # Some histograms have shorter time dimension. We select the shortest time
 # of them all.
@@ -214,6 +216,7 @@ for k, loc in enumerate(sources):
     standard_deviation[loc] = (["time", "x", "y"],
                                np.std(posterior[loc], axis=0))
 
+np.save('Santandard_deviation', standard_deviation)
 ###############################################################################
 # Saving the likelihood & posteior as netCDFs
 ###############################################################################
@@ -230,7 +233,8 @@ ds_post = xr.Dataset(data_vars=standard_deviation,
                      attrs=attributes)
 
 # output_path_post = f'../analysis/STD_{avg_label}.nc'
-output_path_post = f'/scratch/cpierard/STD_{avg_label}.nc'
+# output_path_post = f'/scratch/cpierard/STD_{avg_label}.nc'
+output_path_post = f'STD_{avg_label}.nc'
 
 ds_post.to_netcdf(output_path_post)
 # ds_post.close()
