@@ -133,7 +133,7 @@ for loc in sources:
                                                           density=True)
                 h[i_sample, t] = H_norm
 
-        np.save(f'/scratch/cpierard/histograms_{loc}_{t}.npy', h)
+            np.save(f'/scratch/cpierard/histograms_{loc}_{t}.npy', h)
     counts[loc] = h
 #    dump to npy file
 
