@@ -58,8 +58,8 @@ compute_mean = True  # True if you want to compute the average probability
 average_window = 30  # days (or stored time steps from parcels simulations)
 
 # Bootstrap-parameters
-sample_size = 10000
-number_samples = 50  # at least 50 up to 100
+sample_size = 1000
+number_samples = 10  # at least 50 up to 100
 
 print(f'Compute mean == {compute_mean}!')
 
@@ -133,7 +133,7 @@ for loc in sources:
                                                           density=True)
                 h[i_sample, t] = H_norm
 
-        np.save(f'histograms_{loc}_{t}', h)
+        np.save(f'histograms_{loc}_{t}.npy', h)
     counts[loc] = h
 #    dump to npy file
 
@@ -216,7 +216,7 @@ for k, loc in enumerate(sources):
     standard_deviation[loc] = (["time", "x", "y"],
                                np.std(posterior[loc], axis=0))
 
-np.save('Santandard_deviation', standard_deviation)
+np.save('Santandard_deviation.npy', standard_deviation)
 ###############################################################################
 # Saving the likelihood & posteior as netCDFs
 ###############################################################################
@@ -233,8 +233,8 @@ ds_post = xr.Dataset(data_vars=standard_deviation,
                      attrs=attributes)
 
 # output_path_post = f'../analysis/STD_{avg_label}.nc'
-# output_path_post = f'/scratch/cpierard/STD_{avg_label}.nc'
-output_path_post = f'STD_{avg_label}.nc'
+output_path_post = f'/scratch/cpierard/STD_{avg_label}.nc'
+# output_path_post = f'STD_{avg_label}.nc'
 
 ds_post.to_netcdf(output_path_post)
-# ds_post.close()
+ds_post.close()
