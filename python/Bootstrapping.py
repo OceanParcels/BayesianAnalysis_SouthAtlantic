@@ -58,7 +58,7 @@ compute_mean = True  # True if you want to compute the average probability
 average_window = 30  # days (or stored time steps from parcels simulations)
 
 # Bootstrap-parameters
-sample_size = 1000
+sample_size = 100000
 number_samples = 2  # at least 50 up to 100
 
 print(f'Compute mean == {compute_mean}!')
