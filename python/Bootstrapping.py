@@ -53,7 +53,7 @@ def time_averaging_field(array, window=30, normalized=True):
 ###############################################################################
 # Setting the parameters
 ###############################################################################
-series = 1  # the number of the simulation series
+series = 6  # the number of the simulation series
 compute_mean = True  # True if you want to compute the average probability
 average_window = 30  # days (or stored time steps from parcels simulations)
 
@@ -134,7 +134,7 @@ for loc in sources:
                 h[i_sample, t] = H_norm
 
     counts[loc] = h
-    np.save(f'/scratch/cpierard/histograms_{loc}_.npy', counts)
+    np.save('/scratch/cpierard/histograms_.npy', counts)
 #    dump to npy file
 
 # Some histograms have shorter time dimension. We select the shortest time
