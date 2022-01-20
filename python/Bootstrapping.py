@@ -53,13 +53,13 @@ def time_averaging_field(array, window=30, normalized=True):
 ###############################################################################
 # Setting the parameters
 ###############################################################################
-series = 6  # the number of the simulation series
+series = 1  # the number of the simulation series
 compute_mean = True  # True if you want to compute the average probability
 average_window = 30  # days (or stored time steps from parcels simulations)
 
 # Bootstrap-parameters
 sample_size = 1000
-number_samples = 10  # at least 50 up to 100
+number_samples = 2  # at least 50 up to 100
 
 print(f'Compute mean == {compute_mean}!')
 
@@ -133,8 +133,8 @@ for loc in sources:
                                                           density=True)
                 h[i_sample, t] = H_norm
 
-            np.save(f'/scratch/cpierard/histograms_{loc}_{t}.npy', h)
     counts[loc] = h
+    np.save(f'/scratch/cpierard/histograms_{loc}_.npy', counts)
 #    dump to npy file
 
 # Some histograms have shorter time dimension. We select the shortest time
@@ -233,7 +233,7 @@ ds_post = xr.Dataset(data_vars=standard_deviation,
                      attrs=attributes)
 
 # output_path_post = f'../analysis/STD_{avg_label}.nc'
-output_path_post = f'/scratch/cpierard/STD_{avg_label}.nc'
+output_path_post = f'/scratch/cpierard/STD_{avg_label}_{series}.nc'
 # output_path_post = f'STD_{avg_label}.nc'
 
 ds_post.to_netcdf(output_path_post)
