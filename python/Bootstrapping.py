@@ -59,7 +59,7 @@ average_window = 30  # days (or stored time steps from parcels simulations)
 
 # Bootstrap-parameters
 sample_size = 100000
-number_samples = 2  # at least 50 up to 100
+number_samples = 50  # at least 50 up to 100
 
 print(f'Compute mean == {compute_mean}!')
 
@@ -216,7 +216,8 @@ for k, loc in enumerate(sources):
     standard_deviation[loc] = (["time", "x", "y"],
                                np.std(posterior[loc], axis=0))
 
-np.save('/scratch/cpierard/Santandard_deviation.npy', standard_deviation)
+np.save('/scratch/cpierard/Means.npy', standard_deviation)
+np.save('/scratch/cpierard/Standard_deviation.npy', standard_deviation)
 ###############################################################################
 # Saving the likelihood & posteior as netCDFs
 ###############################################################################
