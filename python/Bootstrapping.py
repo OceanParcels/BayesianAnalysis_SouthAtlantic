@@ -134,7 +134,7 @@ for loc in sources:
                 h[i_sample, t] = H_norm
 
     counts[loc] = h
-    np.save('/scratch/cpierard/histograms_.npy', counts)
+    #np.save('/scratch/cpierard/histograms_.npy', counts)
 #    dump to npy file
 
 # Some histograms have shorter time dimension. We select the shortest time
