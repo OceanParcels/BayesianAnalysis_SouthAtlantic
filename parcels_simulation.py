@@ -8,8 +8,8 @@ import sys
 import local_kernels as kernels
 import xarray as xr
 
-series = 6
-resusTime = 69
+series = 8
+resusTime = 171
 shoreTime = 10
 start_time = datetime.strptime('2016-04-01 12:00:00',
                                '%Y-%m-%d %H:%M:%S')

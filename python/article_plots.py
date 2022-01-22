@@ -156,108 +156,133 @@ plt.close()
 ###############################################################################
 # Particle Age Distributions
 ###############################################################################
-# print('- Age Distributions plots')
-# plt.rcParams['font.size'] = 8
-#
-# posterior30 = xr.load_dataset('../analysis/posterior_average_30.nc')
-# likelihood30 = xr.load_dataset('../analysis/likelihood_average_30.nc')
-#
-# A = (35, 47)
-# B = (78, 47)
-# C = (59, 60)
-# time = np.linspace(1, 53, 53)*30/365
-#
-# fig = plt.figure(figsize=(6, 6), constrained_layout=True)
-# gs = fig.add_gridspec(4, 2, wspace=0.05, height_ratios=[0.2]+[0.8/3]*3)
-#
-# ##
-# ax00 = fig.add_subplot(gs[0, 0], projection=ccrs.PlateCarree())
-# gl = ax00.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
-#                     linewidth=0.5, color='black', alpha=0.5,
-#                     linestyle='--')
-# gl.top_labels = False
-# gl.right_labels = False
-#
-# ax00.set_extent([-73.0, 24.916666, -60.916664, -5.0833335],
-#                 crs=ccrs.PlateCarree())
-#
-# ax00.add_feature(cfeature.OCEAN)
-# ax00.add_feature(cfeature.LAND, zorder=1)
-# ax00.add_feature(cfeature.COASTLINE)
-#
-# ilons = [A[0], B[0], C[0]]
-# ilats = [A[1], B[1], C[1]]
-# labels = ['A', 'B', 'C']
-#
-# print('################################')
-# for i in range(3):
-#     lon_coord = posterior30['lon'][ilons[i]].values
-#     lat_coord = posterior30['lat'][ilats[i]].values
-#     ax00.scatter(lon_coord, lat_coord,
-#                  s=60, marker='o', color='red', edgecolors='k')
-#     ax00.text(posterior30['lon'][ilons[i]]+2, posterior30['lat']
-#               [ilats[i]]+2, labels[i], fontsize=12)
-#
-#     print(f'Point {labels[i]} coords: {lat_coord} lat, {lon_coord} lon')
-# print('################################')
-#
-# ax01 = fig.add_subplot(gs[0, 1])
-# ax01.axis('off')
-# ax11 = fig.add_subplot(gs[1, :])
-# ax21 = fig.add_subplot(gs[2, :], sharex=ax11)
-# ax31 = fig.add_subplot(gs[3, :], sharex=ax11)
-# plt.setp(ax11.get_xticklabels(), visible=False)
-# plt.setp(ax21.get_xticklabels(), visible=False)
-# handles = []
-#
-# for k, loc in enumerate(ordered_labels):
-#     a = posterior30[loc][:, A[0], A[1]].where(
-#         posterior30['counts'][:, A[0], A[1]] >= min_particle_cond)
-#     b = posterior30[loc][:, B[0], B[1]].where(
-#         posterior30['counts'][:, B[0], B[1]] >= min_particle_cond)
-#     c = posterior30[loc][:, C[0], C[1]].where(
-#         posterior30['counts'][:, C[0], C[1]] >= min_particle_cond)
-#
-#     hdl = ax11.plot(time, a, '.-', label=loc, color=f'C{k}')
-#     ax21.plot(time, b, '.-', label=loc, color=f'C{k}')
-#     ax31.plot(time, c, '.-', label=loc, color=f'C{k}')
-#     handles.append(hdl[0])
-#
-# ax11_t = ax11.twinx()
-# ax21_t = ax21.twinx()
-# ax31_t = ax31.twinx()
-#
-# hdl_twin = ax11_t.plot(time, posterior30['counts'][:, A[0], A[1]],
-#                        '--', label='Number of particles', c='k')
-# handles = handles + hdl_twin
-# ax21_t.plot(time, posterior30['counts'][:,  B[0], B[1]], '--',
-#             label=loc, c='k')
-# ax31_t.plot(time, posterior30['counts'][:,  C[0], C[1]], '--',
-#             label=loc, c='k')
-# up_lim = 200
-# ax11_t.set_ylim(0, up_lim)
-# ax21_t.set_ylim(0, up_lim)
-# ax31_t.set_ylim(0, up_lim)
-# ax11_t.set_xlim(0, 3.4)
-# ax21_t.set_xlim(0, 3.4)
-# ax31_t.set_xlim(0, 3.4)
-# ax21_t.set_ylabel('Number of particles', fontsize=10, labelpad=10)
-# ax21.set_ylabel('Posterior Probability', fontsize=10)
-# ax11.grid()
-# ax21.grid()
-# ax31.grid()
-# ax11.set_ylim(0, 1)
-# ax21.set_ylim(0, 1)
-# ax31.set_ylim(0, 1)
-# ax11.text(0.1, 0.85, 'A', fontsize=12)
-# ax21.text(0.1, 0.85, 'B', fontsize=12)
-# ax31.text(0.1, 0.85, 'C', fontsize=12)
-# ax31.set_xlabel('Particle age (years)', fontsize=10)
-#
-# ax01.legend(handles=handles, loc='lower center', ncol=2)
-# plt.savefig(output_path + 'particle_age_distributions.pdf', format='pdf')
-# plt.close()
-#
+print('- Age Distributions plots')
+plt.rcParams['font.size'] = 10
+
+posterior30 = xr.load_dataset('../analysis/posterior_average_30.nc')
+likelihood30 = xr.load_dataset('../analysis/likelihood_average_30.nc')
+std_30 = xr.load_dataset('../analysis/STD__aw30_6_100.nc')
+
+A = (35, 47)
+B = (78, 47)
+C = (59, 60)
+time = np.linspace(1, 53, 53)*30/365
+
+fig = plt.figure(figsize=(10, 8), constrained_layout=True)
+gs = fig.add_gridspec(4, 2, wspace=0.05, height_ratios=[0.25]+[0.75/3]*3)
+
+##
+ax00 = fig.add_subplot(gs[0, 0], projection=ccrs.PlateCarree())
+gl = ax00.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                    linewidth=0.5, color='black', alpha=0.5,
+                    linestyle='--')
+gl.top_labels = False
+gl.right_labels = False
+
+ax00.set_extent([-73.0, 24.916666, -60.916664, -5.0833335],
+                crs=ccrs.PlateCarree())
+
+ax00.add_feature(cfeature.OCEAN)
+ax00.add_feature(cfeature.LAND, zorder=1)
+ax00.add_feature(cfeature.COASTLINE)
+
+ilons = [A[0], B[0], C[0]]
+ilats = [A[1], B[1], C[1]]
+labels = ['A', 'B', 'C']
+
+print('################################')
+for i in range(3):
+    lon_coord = posterior30['lon'][ilons[i]].values
+    lat_coord = posterior30['lat'][ilats[i]].values
+    ax00.scatter(lon_coord, lat_coord,
+                 s=60, marker='o', color='red', edgecolors='k')
+    ax00.text(posterior30['lon'][ilons[i]]+2, posterior30['lat']
+              [ilats[i]]+2, labels[i], fontsize=12)
+
+    print(f'Point {labels[i]} coords: {lat_coord} lat, {lon_coord} lon')
+print('################################')
+
+ax01 = fig.add_subplot(gs[0, 1])
+ax01.axis('off')
+ax11 = fig.add_subplot(gs[1, :])
+ax21 = fig.add_subplot(gs[2, :], sharex=ax11)
+ax31 = fig.add_subplot(gs[3, :], sharex=ax11)
+plt.setp(ax11.get_xticklabels(), visible=False)
+plt.setp(ax21.get_xticklabels(), visible=False)
+handles = []
+
+for k, loc in enumerate(etiquetas):
+    if loc in clusters:
+        marker_color = f'C{k}'
+        fmt_ = 'o-'
+    elif loc == 'Unclustered-America':
+        marker_color = 'magenta'
+        fmt_ = 's-'
+    elif loc == 'Unclustered-Africa':
+        marker_color = 'aquamarine'
+        fmt_ = 's-'
+
+    a = posterior30[loc][:, A[0], A[1]].where(
+        posterior30['counts'][:, A[0], A[1]] >= min_particle_cond)
+    ebar_a = std_30[loc][:, A[0], A[1]].where(
+        posterior30['counts'][:, A[0], A[1]] > min_particle_cond)
+
+    b = posterior30[loc][:, B[0], B[1]].where(
+        posterior30['counts'][:, B[0], B[1]] >= min_particle_cond)
+    ebar_b = std_30[loc][:, B[0], B[1]].where(
+        posterior30['counts'][:, B[0], B[1]] > min_particle_cond)
+    c = posterior30[loc][:, C[0], C[1]].where(
+        posterior30['counts'][:, C[0], C[1]] >= min_particle_cond)
+    ebar_c = std_30[loc][:, C[0], C[1]].where(
+        posterior30['counts'][:, C[0], C[1]] > min_particle_cond)
+    hdl = ax11.errorbar(time, a, yerr=ebar_a, fmt=fmt_,
+                        label=loc, color=marker_color, ms=4,
+                        elinewidth=1, capsize=2)
+    ax21.errorbar(time, b, yerr=ebar_b, fmt=fmt_,
+                  label=loc, color=marker_color, ms=4,
+                  elinewidth=1, capsize=2)
+    ax31.errorbar(time, c, yerr=ebar_c, fmt=fmt_,
+                  label=loc, color=marker_color, ms=4,
+                  elinewidth=1, capsize=2)
+
+    handles.append(hdl)
+
+
+ax11_t = ax11.twinx()
+ax21_t = ax21.twinx()
+ax31_t = ax31.twinx()
+
+hdl_twin = ax11_t.plot(time, posterior30['counts'][:, A[0], A[1]],
+                       '--', label='Number of particles', c='k')
+handles = handles + hdl_twin
+ax21_t.plot(time, posterior30['counts'][:,  B[0], B[1]], '--',
+            label=loc, c='k')
+ax31_t.plot(time, posterior30['counts'][:,  C[0], C[1]], '--',
+            label=loc, c='k')
+up_lim = 250
+ax11_t.set_ylim(0, up_lim)
+ax21_t.set_ylim(0, up_lim)
+ax31_t.set_ylim(0, up_lim)
+ax11_t.set_xlim(0, 3.4)
+ax21_t.set_xlim(0, 3.4)
+ax31_t.set_xlim(0, 3.4)
+ax21_t.set_ylabel('Number of particles', fontsize=14, labelpad=10)
+ax21.set_ylabel('Posterior Probability', fontsize=14)
+ax11.grid()
+ax21.grid()
+ax31.grid()
+ax11.set_ylim(0, 1)
+ax21.set_ylim(0, 0.5)
+ax31.set_ylim(0, 0.7)
+ax11.text(0.1, 0.85, 'A', fontsize=12)
+ax21.text(0.1, 0.43, 'B', fontsize=12)
+ax31.text(0.1, 0.62, 'C', fontsize=12)
+ax31.set_xlabel('Particle age (years)', fontsize=14)
+
+ax01.legend(handles=handles, loc='lower center', ncol=2)
+plt.savefig(output_path + 'particle_age_distributions.pdf', format='pdf')
+plt.close()
+
 
 ###############################################################################
 # Beaching probability plot

@@ -55,7 +55,7 @@ def time_averaging_field(array, window=30, normalized=True):
 ###############################################################################
 series = 6  # the number of the simulation series
 compute_mean = True  # True if you want to compute the average probability
-average_window = 30  # days (or stored time steps from parcels simulations)
+average_window = 1234  # days (or stored time steps from parcels simulations)
 
 # Bootstrap-parameters
 sample_size = 100000
@@ -216,8 +216,9 @@ for k, loc in enumerate(sources):
     standard_deviation[loc] = (["time", "x", "y"],
                                np.std(posterior[loc], axis=0))
 
-np.save('/scratch/cpierard/Means.npy', standard_deviation)
-np.save('/scratch/cpierard/Standard_deviation.npy', standard_deviation)
+np.save(f'/scratch/cpierard/Means_{avg_label}.npy', standard_deviation)
+np.save(f'/scratch/cpierard/Standard_deviation_{avg_label}.npy',
+        standard_deviation)
 ###############################################################################
 # Saving the likelihood & posteior as netCDFs
 ###############################################################################
