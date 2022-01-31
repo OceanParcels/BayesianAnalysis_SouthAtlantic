@@ -53,7 +53,7 @@ def time_averaging_field(array, window=30, normalized=True):
 ###############################################################################
 # Setting the parameters
 ###############################################################################
-series = 6  # the number of the simulation series
+series = 8  # the number of the simulation series
 compute_mean = True  # True if you want to compute the average probability
 average_window = 1234  # days (or stored time steps from parcels simulations)
 
@@ -96,7 +96,7 @@ for loc in sources:
     # path_2_file = f"../data/simulations/sa-s{series:02d}" + \
     # f"/sa-s{series:02d}-{loc}.nc"
     path_2_file = "/data/oceanparcels/output_data/data_Claudio/" + \
-        f"sa-s{series:02d}-{loc}.nc"
+        f"sa-s{series:02d}/sa-s{series:02d}-{loc}.nc"
     particles = xr.load_dataset(path_2_file)
 
     trajectories = particles.dims['traj']
@@ -216,9 +216,9 @@ for k, loc in enumerate(sources):
     standard_deviation[loc] = (["time", "x", "y"],
                                np.std(posterior[loc], axis=0))
 
-np.save(f'/scratch/cpierard/Means_{avg_label}.npy', standard_deviation)
-np.save(f'/scratch/cpierard/Standard_deviation_{avg_label}.npy',
-        standard_deviation)
+# np.save(f'/scratch/cpierard/Means_{avg_label}.npy', standard_deviation)
+# np.save(f'/scratch/cpierard/Standard_deviation_{avg_label}.npy',
+    # standard_deviation)
 ###############################################################################
 # Saving the likelihood & posteior as netCDFs
 ###############################################################################
@@ -235,7 +235,7 @@ ds_post = xr.Dataset(data_vars=standard_deviation,
                      attrs=attributes)
 
 # output_path_post = f'../analysis/STD_{avg_label}.nc'
-output_path_post = f'/scratch/cpierard/STD_{avg_label}_{series}_{number_samples}.nc'
+output_path_post = f'/scratch/cpierard/STD_{avg_label}_sa-{series}_{number_samples}.nc'
 # output_path_post = f'STD_{avg_label}.nc'
 
 ds_post.to_netcdf(output_path_post)
