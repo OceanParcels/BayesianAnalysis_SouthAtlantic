@@ -72,7 +72,7 @@ lat_range = np.linspace(domain_limits[1][0], domain_limits[1][1],
                         number_bins[1])
 
 # Loading priors. Computed with release_points.py script.
-priors = pd.read_csv('../data/analysis/priors_river_inputs.csv',
+priors = pd.read_csv('../priors_river_inputs.csv',
                      index_col=0)
 sources = list(priors.index)
 number_sources = len(sources)
@@ -208,8 +208,8 @@ post_afr = xr.Dataset(data_vars=posterior_africa,
                       coords=coordinates,
                       attrs=attributes)
 
-output_path_ame = f'../analysis/beach_posterior_America_{avg_label}.nc'
-output_path_afr = f'../analysis/beach_posterior_Africa_{avg_label}.nc'
+output_path_ame = newpath + f'beach_posterior_America_{avg_label}.nc'
+output_path_afr = newpath + f'beach_posterior_Africa_{avg_label}.nc'
 
 post_ame.to_netcdf(output_path_ame)
 post_afr.to_netcdf(output_path_afr)

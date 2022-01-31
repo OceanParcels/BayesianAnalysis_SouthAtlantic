@@ -235,17 +235,20 @@ for k, loc in enumerate(etiquetas):
         posterior30['counts'][:, C[0], C[1]] >= min_particle_cond)
     ebar_c = std_30[loc][:, C[0], C[1]].where(
         posterior30['counts'][:, C[0], C[1]] > min_particle_cond)
-    hdl = ax11.errorbar(time, a, yerr=ebar_a, fmt=fmt_,
-                        label=loc, color=marker_color, ms=4,
-                        elinewidth=1, capsize=2)
-    ax21.errorbar(time, b, yerr=ebar_b, fmt=fmt_,
-                  label=loc, color=marker_color, ms=4,
-                  elinewidth=1, capsize=2)
-    ax31.errorbar(time, c, yerr=ebar_c, fmt=fmt_,
-                  label=loc, color=marker_color, ms=4,
-                  elinewidth=1, capsize=2)
+    alfa = 0.1
+    hdl = ax11.plot(time, a, fmt_, label=loc, color=marker_color, ms=4)
+    ax11.fill_between(time, a, a + ebar_a, color=marker_color, alpha=alfa)
+    ax11.fill_between(time, a, a - ebar_a, color=marker_color, alpha=alfa)
 
-    handles.append(hdl)
+    ax21.plot(time, b, fmt_, label=loc, color=marker_color, ms=4)
+    ax21.fill_between(time, b, b + ebar_b, color=marker_color, alpha=alfa)
+    ax21.fill_between(time, b, b - ebar_b, color=marker_color, alpha=alfa)
+
+    ax31.plot(time, c, fmt_, label=loc, color=marker_color, ms=4)
+    ax31.fill_between(time, c, c + ebar_c, color=marker_color, alpha=alfa)
+    ax31.fill_between(time, c, c - ebar_c, color=marker_color, alpha=alfa)
+
+    handles.append(hdl[0])
 
 
 ax11_t = ax11.twinx()
@@ -272,11 +275,11 @@ ax11.grid()
 ax21.grid()
 ax31.grid()
 ax11.set_ylim(0, 1)
-ax21.set_ylim(0, 0.5)
-ax31.set_ylim(0, 0.7)
+ax21.set_ylim(0, 1)
+ax31.set_ylim(0, 1)
 ax11.text(0.1, 0.85, 'A', fontsize=12)
-ax21.text(0.1, 0.43, 'B', fontsize=12)
-ax31.text(0.1, 0.62, 'C', fontsize=12)
+ax21.text(0.1, 0.85, 'B', fontsize=12)
+ax31.text(0.1, 0.85, 'C', fontsize=12)
 ax31.set_xlabel('Particle age (years)', fontsize=14)
 
 ax01.legend(handles=handles, loc='lower center', ncol=2)

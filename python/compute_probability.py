@@ -80,7 +80,7 @@ lat_range = np.linspace(domain_limits[1][0], domain_limits[1][1],
                         number_bins[1])
 
 # Loading priors. Computed with release_points.py script.
-priors = pd.read_csv('../data/analysis/priors_river_inputs.csv',
+priors = pd.read_csv('../priors_river_inputs.csv',
                      index_col=0)
 sources = list(priors.index)
 number_sources = len(sources)
@@ -237,8 +237,8 @@ for average_window in [1234, 30]:
                          coords=coordinates,
                          attrs=attributes)
 
-    output_path_post = f'../analysis/posterior_{avg_label}.nc'
-    output_path_like = f'../analysis/likelihood_{avg_label}.nc'
+    output_path_post = newpath + f'posterior_{avg_label}.nc'
+    output_path_like = newpath + f'likelihood_{avg_label}.nc'
 
     ds_post.to_netcdf(output_path_post)
     ds_like.to_netcdf(output_path_like)
