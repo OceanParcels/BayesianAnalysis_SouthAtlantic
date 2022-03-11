@@ -1,13 +1,13 @@
-### Source Code for article "Attribution of River-Sourced Floating Plastic in the South Atlantic Ocean Using Bayesian Inference"
+### Source Code for article "Attribution of Plastic Sources Using Bayesian Inference: Application to River-Sourced Floating Plastic in the South Atlantic Ocean"
 
-This repository contains the code to reproduce the results shown in the article "Attribution of River-Sourced Floating Plastic in the South Atlantic Ocean Using Bayesian Inference". In general, you can find the scripts for running the simulation and the scripts for analysing the output of the simulation.
+This repository contains the code to reproduce the results shown in the article "Attribution of Plastic Sources Using Bayesian Inference: Application to River-Sourced Floating Plastic in the South Atlantic Ocean". In general, you can find the scripts for running the simulation and the scripts for analysing the output of the simulation.
 
-This code uses [Ocean Parcels](https://oceanparcels.org) to perform the simulations. We recommend creating and environment to run the code as explained [here](https://oceanparcels.org/#installing). for the analysis, make sure to install the packages on the `requirements.txt`.
+This code uses [Ocean Parcels](https://oceanparcels.org) to perform the simulations. We recommend creating and environment to run the code as explained [here](https://oceanparcels.org/#installing). For the analysis, make sure to install the packages on the `requirements.txt`.
 
-Here is a description of scripts according to it's function.
+Here is a description of scripts according to it's function:
 
 #### Analysis
-To run the following scripts download data from the simulations from the supplementary material. For the scripts to work make sure to save the Data from the supplementary material within this repository such as `BayesianInference_SouthAtlantic/Pierard_et_al_GRL_2021`.
+To run the following scripts download data from the simulations from the supplementary material. For the scripts to work make sure to save the Data from the supplementary material within this repository such as `BayesianInference_SouthAtlantic/PierardBassottoMeirervanSebille_AttributionofPlastic`.
 
 We recommend running the scripts in the following order:
 

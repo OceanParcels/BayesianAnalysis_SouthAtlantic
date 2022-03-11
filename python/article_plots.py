@@ -2,7 +2,6 @@
 This script plots the article shown in the article, except for the map with the
 clusters. This script requires the already processed data obtained by running
 `compute_probability.py` and `beached_probability.py`.
-
 '''
 import numpy as np
 import xarray as xr
@@ -11,7 +10,9 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import matplotlib.ticker as mtick
 import os
-river_sources = np.load('../river_sources.npy',
+
+path2folder = '../PierardBassottoMeirervanSebille_AttributionofPlastic/'
+river_sources = np.load(path2folder + 'river_sources.npy',
                         allow_pickle=True).item()
 
 ordered_labels = ['Recife',
@@ -50,10 +51,8 @@ plt.rcParams['font.family'] = 'sans-serif'
 # Probability maps
 ###############################################################################
 print('Plotting pobability maps')
-posterior = xr.load_dataset(
-    f'../analysis/posterior_average_{average_window}.nc')
-likelihood = xr.load_dataset(
-    f'../analysis/likelihood_average_{average_window}.nc')
+posterior = xr.load_dataset(path2folder + f'analysis/posterior_average_{average_window}.nc')
+likelihood = xr.load_dataset(path2folder + f'analysis/likelihood_average_{average_window}.nc')
 
 y, x = np.meshgrid(posterior['lat'], posterior['lon'])
 
@@ -159,9 +158,9 @@ plt.close()
 print('- Age Distributions plots')
 plt.rcParams['font.size'] = 10
 
-posterior30 = xr.load_dataset('../analysis/posterior_average_30.nc')
-likelihood30 = xr.load_dataset('../analysis/likelihood_average_30.nc')
-std_30 = xr.load_dataset('../analysis/STD__aw30_6_100.nc')
+posterior30 = xr.load_dataset(path2folder + 'analysis/posterior_average_30.nc')
+# likelihood30 = xr.load_dataset('../analysis/likelihood_average_30.nc')
+std_30 = xr.load_dataset(path2folder + 'analysis/STD__aw30_6_100.nc')
 
 A = (35, 47)
 B = (78, 47)
@@ -292,9 +291,9 @@ plt.close()
 ###############################################################################
 print('- Plotting the beaching probabilities')
 america = xr.load_dataset(
-    f'../analysis/beach_posterior_America_average_{average_window}.nc')
+    path2folder + f'analysis/beach_posterior_America_average_{average_window}.nc')
 africa = xr.load_dataset(
-    f'../analysis/beach_posterior_Africa_average_{average_window}.nc')
+    path2folder + f'analysis/beach_posterior_Africa_average_{average_window}.nc')
 
 african_sources = ['Congo', 'Cape-Town']
 american_sources = ['Paraiba', 'Itajai', 'Rio-de-la-Plata', 'Rio-de-Janeiro',

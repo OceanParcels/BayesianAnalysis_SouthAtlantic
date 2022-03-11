@@ -55,6 +55,7 @@ def time_averaging_field(array, window=30, normalized=True):
     return averaged, time_array
 
 
+path2folder = '../PierardBassottoMeirervanSebille_AttributionofPlastic/'
 # Creating the directory to store the analysis dataset
 newpath = r'../analysis/'
 if not os.path.exists(newpath):
@@ -80,7 +81,7 @@ lat_range = np.linspace(domain_limits[1][0], domain_limits[1][1],
                         number_bins[1])
 
 # Loading priors. Computed with release_points.py script.
-priors = pd.read_csv('../priors_river_inputs.csv',
+priors = pd.read_csv(path2folder + 'priors_river_inputs.csv',
                      index_col=0)
 sources = list(priors.index)
 number_sources = len(sources)
@@ -103,8 +104,8 @@ for average_window in [1234, 30]:
     time_dimensions = []
     for loc in sources:
         print(f'- {loc}')
-        # path_2_file = f"../Pierard_et_al_GRL_2021/sa-simulation-{loc}.nc"
-        path_2_file = f"../data/simulations/sa-s06/sa-s06-{loc}.nc"
+        path_2_file = path2folder + f"sa-simulation-{loc}.nc"
+        # path_2_file = f"../data/simulations/sa-s06/sa-s06-{loc}.nc"
         particles = xr.load_dataset(path_2_file)
         n = particles.dims['traj']
         time = particles.dims['obs']

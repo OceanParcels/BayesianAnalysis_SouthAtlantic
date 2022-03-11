@@ -4,6 +4,7 @@ Script for computing the uncertainties by doing Bootstrapping.
 import numpy as np
 import xarray as xr
 import pandas as pd
+import os
 
 
 def time_averaging_field(array, window=30, normalized=True):
@@ -53,6 +54,12 @@ def time_averaging_field(array, window=30, normalized=True):
 ###############################################################################
 # Setting the parameters
 ###############################################################################
+newpath = r'../analysis/'
+if not os.path.exists(newpath):
+    os.makedirs(newpath)
+
+path2folder = '../PierardBassottoMeirervanSebille_AttributionofPlastic/'
+
 series = 8  # the number of the simulation series
 compute_mean = True  # True if you want to compute the average probability
 average_window = 30  # days (or stored time steps from parcels simulations)
@@ -74,7 +81,8 @@ lat_range = np.linspace(domain_limits[1][0], domain_limits[1][1],
 
 # Loading priors. Computed with release_points.py script.
 # priors = pd.read_csv('../data/analysis/priors_river_inputs.csv', index_col=0)
-priors = pd.read_csv('../priors_river_inputs.csv', index_col=0)
+priors = pd.read_csv(path2folder + 'priors_river_inputs.csv',
+                     index_col=0)
 sources = list(priors.index)
 number_sources = len(sources)
 
@@ -93,10 +101,9 @@ time_dimensions = []
 
 for loc in sources:
     print(f'- {loc}')
-    # path_2_file = f"../data/simulations/sa-s{series:02d}" + \
-    # f"/sa-s{series:02d}-{loc}.nc"
-    path_2_file = "/data/oceanparcels/output_data/data_Claudio/" + \
-        f"sa-s{series:02d}/sa-s{series:02d}-{loc}.nc"
+    path_2_file = path2folder + f"/sa-s{series:02d}-{loc}.nc"
+    # path_2_file = "/data/oceanparcels/output_data/data_Claudio/" + \
+    #     f"sa-s{series:02d}/sa-s{series:02d}-{loc}.nc"
     particles = xr.load_dataset(path_2_file)
 
     trajectories = particles.dims['traj']
@@ -234,8 +241,8 @@ ds_post = xr.Dataset(data_vars=standard_deviation,
                      coords=coordinates,
                      attrs=attributes)
 
-# output_path_post = f'../analysis/STD_{avg_label}.nc'
-output_path_post = f'/scratch/cpierard/STD_{avg_label}_sa-{series}_{number_samples}.nc'
+output_path_post = f'../analysis/STD_{avg_label}_sa-{series}_{number_samples}.nc'
+# output_path_post = f'/scratch/cpierard/STD_{avg_label}_sa-{series}_{number_samples}.nc'
 # output_path_post = f'STD_{avg_label}.nc'
 
 ds_post.to_netcdf(output_path_post)
