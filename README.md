@@ -11,10 +11,13 @@ To run the following scripts download data from the simulations from the supplem
 
 We recommend running the scripts in the following order:
 
+0. `python/article_plots.py`: plots the figures shown in the article. The analysis files that you get from step 1, 2, and 3 are in the `PierardBassottoMeirervanSebille_AttributionofPlastic/analysis`. You can plot the plots without running the analysis
+
 1. `python/compute_probability.py`: computes the probabilities in the domain.
 2. `python/beached_probability.py`: computes the probabilities
  for beached particles.
-3. `python/article_plots.py`: plots the figures shown in the article.
+3. `python/Bootstrapping.py`: computes the standard deviation by performing bootstrapping. This takes 1 day in a super computer. Avoid running it in the local computer.
+
 
 #### Simulation
 To run the simulations you need to download the SMOC velocity fields from April 2016 to august 2020.
