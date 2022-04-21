@@ -103,7 +103,8 @@ bar_ax = fig.add_axes([0.3, 0.13, 0.4, 0.05])
 cbar = fig.colorbar(im, cax=bar_ax, orientation='horizontal', extend='max')
 cbar.ax.xaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
 
-plt.savefig(output_path + 'likelihood.pdf', format='pdf')
+# plt.savefig(output_path + 'likelihood.pdf', format='pdf')
+plt.savefig(output_path + 'likelihood.jpg', format='jpg', dpi=300)
 plt.close()
 
 # posterior
@@ -149,7 +150,8 @@ ax[12].legend(handles=[h], loc='upper center', shadow=True)
 bar_ax = fig.add_axes([0.3, 0.13, 0.4, 0.05])
 cbar = fig.colorbar(im, cax=bar_ax, orientation='horizontal')
 
-plt.savefig(output_path + 'posterior.pdf', format='pdf')
+# plt.savefig(output_path + 'posterior.pdf', format='pdf')
+plt.savefig(output_path + 'posterior.jpg', format='jpg', dpi=300)
 plt.close()
 
 ###############################################################################
@@ -282,7 +284,9 @@ ax31.text(0.1, 0.85, 'C', fontsize=12)
 ax31.set_xlabel('Particle age (years)', fontsize=14)
 
 ax01.legend(handles=handles, loc='lower center', ncol=2)
-plt.savefig(output_path + 'particle_age_distributions.pdf', format='pdf')
+# plt.savefig(output_path + 'particle_age_distributions.pdf', format='pdf')
+plt.savefig(output_path + 'particle_age_distributions.jpg', format='jpg',
+            dpi=300)
 plt.close()
 
 
@@ -388,7 +392,8 @@ for m in ordered_labels_2:
 ax[0, 0].legend(new_handles, ordered_labels_2, bbox_to_anchor=(1, -0.15),
                 loc='center', ncol=4)
 
-plt.savefig(output_path + 'beached_posterior.pdf', format='pdf')
+# plt.savefig(output_path + 'beached_posterior.pdf', format='pdf')
+plt.savefig(output_path + 'beached_posterior.jpg', format='jpg', dpi=300)
 plt.close()
 
 ###############################################################################
