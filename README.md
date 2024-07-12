@@ -1,6 +1,6 @@
 ### Source Code for article "Attribution of Plastic Sources Using Bayesian Inference: Application to River-Sourced Floating Plastic in the South Atlantic Ocean"
 
-This repository contains the code to reproduce the results shown in the article "Attribution of Plastic Sources Using Bayesian Inference: Application to River-Sourced Floating Plastic in the South Atlantic Ocean". In general, you can find the scripts for running the simulation and the scripts for analysing the output of the simulation.
+This repository contains the code to reproduce the results shown in the article "Attribution of Plastic Sources Using Bayesian Inference: Application to River-Sourced Floating Plastic in the South Atlantic Ocean" [doi: 10.3389/fmars.2022.925437]( https://doi.org/10.3389/fmars.2022.925437 ). In general, you can find the scripts for running the simulation and the scripts for analyzing the output of the simulation.
 
 This code uses [Ocean Parcels](https://oceanparcels.org) to perform the simulations. We recommend creating and environment to run the code as explained [here](https://oceanparcels.org/#installing). For the analysis, make sure to install the packages on the `requirements.txt`.
 
@@ -31,3 +31,6 @@ To run the simulations you need to download the SMOC velocity fields from April 
 
     - `parcels_simulations.py`: script that runs the Lagrangian simulation.
     - `local_kernels.py`: contains the kernels used in the `parcels_simulations.py`. You don't need to run it.
+
+#### Data Availability
+The original contributions presented in the study are publicly available. This data can be found here: [doi:10.24416/UU01-THF29M](https://doi.org/10.24416/UU01-THF29M).
