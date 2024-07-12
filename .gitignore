@@ -15,3 +15,5 @@ notebooks/Verifying_beaching-Fixing_Itajai.ipynb
 article_figs/
 animations/
 revisions/
+*.pdf
+*.pptx
